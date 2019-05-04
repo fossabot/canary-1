@@ -1,15 +1,13 @@
-"""
-This file handles collecting the latest air pollution data
-"""
-
 import boto3
 import botocore
 import os
 import time
 
-Bucket = "air-pollution-data"
-Key = "air-pollution-data.csv"
-outPutName = "data/air-pollution-data.csv"
+# Initialise and set the global variables
+globals = {}
+globals['bucket'] = "air-pollution-data"
+globals['key'] = "air-pollution-data.csv"
+globals['output_name'] = "data/air-pollution-data.csv"
 
 # Pass in the access credentials via environment variables
 AWS_SERVER_PUBLIC_KEY = os.getenv("AWS_SERVER_PUBLIC_KEY", None)
@@ -30,11 +28,13 @@ else:
 while True:
 
     try:
-        s3.Bucket(Bucket).download_file(Key, outPutName)
+        # Try and retrieve the file
+        s3.Bucket(globals['bucket']).download_file(
+            globals['key'], globals['output_name'])
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             print("The object does not exist.")
         else:
             raise
-
+    # Update every hour
     time.sleep(3600)
