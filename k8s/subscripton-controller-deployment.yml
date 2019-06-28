@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription-controller-deployment
+spec:
+  # Number of pods to create and manage
+  replicas: 1
+  # Allows deployment to get handle on created pods
+  selector:
+    matchLabels:
+      component: api
+  # The pod configurationm same as in a Pod config file
+  template:
+    metadata:
+      labels:
+        component: api
+    spec:
+      containers:
+        - name: silence
+          image: mikemcgarry/canary-chirp
+          ports:
+            - containerPort: 5000
+          env:
+            - name: AWS_SERVER_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws
+                  key: SERVER_PUBLIC_KEY
+            - name: AWS_SERVER_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws
+                  key: SERVER_SECRET_KEY
