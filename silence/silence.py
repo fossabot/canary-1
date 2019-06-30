@@ -15,26 +15,26 @@ globals = {}
 
 # Set the directory the the air pollution file
 globals['air_pollution_file'] = "./data/air-pollution-data.csv"
+globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
 globals['levels'] = ['green', 'yellow', 'amber', 'red']
 
-# Import the air pollution data
-def import_air_pollution_data(file_path, retry_time):
+# Import the data
+def import_data(file_path, retry_time):
     """
-    This function imports the air pollution data.
+    This function imports the data.
 
-    param (str) file_path: The path to the air pollution data csv file
+    param (str) file_path: The path to the data csv file
     param (int) retry_time: The time to wait in seconds before re-trying if
     the file import fails
 
-    return (Pandas DataFrame) air_pollution_data: The dataframe containing the
-    latest air pollution data
+    return (Pandas DataFrame) data: The dataframe containing the data
     """
 
     # Keep running until the data is loaded
     while True:
         # Try and read the data from a CSV
         try:
-            air_pollution_data = pd.read_csv(file_path)
+            data = pd.read_csv(file_path)
             # If succesful break the loop
             break
         # If not succesful, assume file does not exist and wait out the retry_period
@@ -46,8 +46,7 @@ def import_air_pollution_data(file_path, retry_time):
             time.sleep(retry_time)
 
     # Return the air pollution data
-    return air_pollution_data
-
+    return data
 
 def process_air_pollution_data(air_pollution_data):
 
@@ -79,7 +78,7 @@ def process_air_pollution_data(air_pollution_data):
     return average_per_timestamp
 
 
-def send_notifications(topic, level):
+def send_notifications(topic, level, subscriber_df):
     """
     This function sends a topic (alert level) and the current pollution level
     to the relevant subscribers.
@@ -95,6 +94,7 @@ def send_notifications(topic, level):
     # Create the client
     client = Client(account_sid, auth_token)
 
+    """
     # Send a WhatsApp message
     message = client.messages.create(
         from_='whatsapp:+14155238886',
@@ -104,23 +104,33 @@ def send_notifications(topic, level):
 
     # Print tbe message id
     print(message.sid)
+    """
 
-    # Send an SMS message
-    message = client.messages.create(
-        from_='+442033225373',
-        body='The air pollution has just reached {} levels the current level is {}'.format(
-            topic, level
-        ),
-        to='+447719143007'
-    )
+    message_body = 'The air pollution has just reached {} levels the current level is {}'.format(
+        topic, level)
 
-    # Print the message id
-    print(message.sid)
+    current_topic_level = globals['levels'].index(topic)
+
+    subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: globals['levels'].index(x))
+
+    relevant_subscribers = subscriber_df[subscriber_df['topic_level'] > current_topic_level]
+
+    for subscriber_phone in relevant_subscribers['phone'].values:
+        # Send an SMS message
+        message = client.messages.create(
+            from_='+442033225373',
+            body=message_body,
+            to=subscriber_phone
+        )
+
+        # Print the message id
+        print(message.sid)
 
 # Continuously run the code below
 while True:
     # Import the latest pollution data with a 60 second retry time
-    air_pollution_data = import_air_pollution_data(globals['air_pollution_file'], 60)
+    air_pollution_data = import_data(globals['air_pollution_file'], 60)
+    subscriber_data = import_data(globals['subscriber_file'], 60)
     # Get the average pollution levels per hour
     average_per_timestamp = process_air_pollution_data(air_pollution_data)
     # Get the current pollution level
@@ -128,6 +138,9 @@ while True:
     # Get the alert category
     level_category = math.floor(current_level / 50)
     # Send notifications to the relevant subscribers
-    send_notifications(topic=globals['levels'][level_category], level=current_level)
+    send_notifications(
+        topic=globals['levels'][level_category],
+        level=current_level,
+        subscriber_df=subscriber_data)
     # Wait 30 seconds before running through the cycle again
-    time.sleep(30)
+    time.sleep(3600)

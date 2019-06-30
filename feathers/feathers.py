@@ -6,20 +6,23 @@ import uuid
 
 # Initialise and set the global variables
 globals = {}
-globals['bucket'] = "airpollutionlondon-queryresults"
+globals['pollution_bucket'] = "airpollutionlondon-queryresults"
+globals['pollution_output_name'] = "data/air-pollution-data.csv"
+globals['subscribers_bucket'] = "airpollutionsubscribers-queryresults"
+globals['subscribers_output_name'] = "data/air-pollution-subscribers.csv"
 globals['database'] = 'airpollutionlondon'
-globals['output_name'] = "data/air-pollution-data.csv"
+
 
 # Pass in the access credentials via environment variables
-AWS_SERVER_PUBLIC_KEY = os.getenv("AWS_SERVER_PUBLIC_KEY", None)
-AWS_SERVER_SECRET_KEY = os.getenv("AWS_SERVER_SECRET_KEY", None)
+globals["AWS_SERVER_PUBLIC_KEY"] = os.getenv("AWS_SERVER_PUBLIC_KEY", None)
+globals["AWS_SERVER_SECRET_KEY"] = os.getenv("AWS_SERVER_SECRET_KEY", None)
 
 # Check if the environment variables exist, they are only required for external access
-if AWS_SERVER_PUBLIC_KEY is not None and AWS_SERVER_SECRET_KEY is not None:
+if globals["AWS_SERVER_PUBLIC_KEY"] is not None and globals["AWS_SERVER_SECRET_KEY"] is not None:
 
     session = boto3.Session(
-        aws_access_key_id=AWS_SERVER_PUBLIC_KEY,
-        aws_secret_access_key=AWS_SERVER_SECRET_KEY,
+        aws_access_key_id=globals["AWS_SERVER_PUBLIC_KEY"],
+        aws_secret_access_key=globals["AWS_SERVER_SECRET_KEY"],
         region_name='eu-west-2'
     )
 
@@ -114,7 +117,7 @@ def fetch_data_view(s3, bucket, file_path, output_path, retry_time):
 while True:
     output_bucket, output_file_path = generate_data_view(
         client=globals['athena'],
-        results_bucket=globals['bucket'],
+        results_bucket=globals['pollution_bucket'],
         database_name=globals['database'],
         sql_query="SELECT * from airpollution",
         retry_time=60)
@@ -123,7 +126,21 @@ while True:
         s3=globals['s3'],
         bucket=output_bucket,
         file_path=output_file_path,
-        output_path=globals['output_name'],
+        output_path=globals['pollution_output_name'],
+        retry_time=60)
+
+    output_bucket, output_file_path = generate_data_view(
+        client=globals['athena'],
+        results_bucket=globals['subscribers_bucket'],
+        database_name=globals['database'],
+        sql_query="SELECT * from subscribers",
+        retry_time=60)
+
+    fetch_data_view(
+        s3=globals['s3'],
+        bucket=output_bucket,
+        file_path=output_file_path,
+        output_path=globals['subscribers_output_name'],
         retry_time=60)
 
     time.sleep(3600)
