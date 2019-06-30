@@ -19,8 +19,8 @@ globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
 globals['levels'] = ['green', 'yellow', 'amber', 'red']
 
 # Get the Twilio account id and authorisation token
-globals['twilio_account_sid'] = os.environ['TWILIO_ACCOUNT_ID']
-globals['twilio_auth_token'] = os.environ['TWILIO_AUTH_TOKEN']
+globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
+globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
 
 # Import the data
 def import_data(file_path, retry_time):
