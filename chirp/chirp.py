@@ -66,6 +66,10 @@ def subscribe_user():
         s3=globals['s3'],
         bucket_name=globals['bucket_name'],
         json_payload=json_payload)
+
+    resp = jsonify(success=True)
+    resp.status_code = 200
+    return resp
     # subscribe the number to the appropriate topic using Twilio
 
 
@@ -80,4 +84,8 @@ def unsubscribe_user():
         s3=globals['s3'],
         bucket_name=globals['bucket_name'],
         phone=phone_number)
+
+    resp = jsonify(success=True)
+    resp.status_code = 200
+    return resp
     # unsubscribe the number to the appropriate topic using Twilio
