@@ -52,7 +52,7 @@ def remove_user_from_s3(s3, bucket_name, phone):
         phone_hash.hexdigest())).delete()
 
 # API GET route for subscribing
-@app.route("subscribe", methods=['POST'])
+@app.route("/subscribe", methods=['POST'])
 def subscribe_user():
     """
     This function subscribes a user to the appropriate topic
@@ -70,7 +70,7 @@ def subscribe_user():
 
 
 # API GET rote for unsubscribing
-@app.route("unsubscribe", methods=['POST'])
+@app.route("/unsubscribe", methods=['POST'])
 def unsubscribe_user():
     """
     This function unsubscribes a user from the appropriate topic
