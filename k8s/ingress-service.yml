@@ -11,11 +11,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - air-monitor.com
-        - www.air-monitor.com
-      secretName: air-monitor-com
+        - chirpingcanary.co.uk
+        - www.chirpingcanary.co.uk
+      secretName: chirpingcanary-co-uk
   rules:
-    - host: air-monitor.com
+    - host: chirpingcanary.co.uk
       http:
         paths:
           - path: /(.*)
@@ -26,7 +26,7 @@ spec:
             backend:
               serviceName: subscription-controller-clusterip-service
               servicePort: 5000
-    - host: www.air-monitor.com
+    - host: www.chirpingcanary.co.uk
       http:
         paths:
           - path: /(.*)

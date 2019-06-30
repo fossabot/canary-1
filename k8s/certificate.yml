@@ -1,20 +1,20 @@
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
-  name: air-monitor-com-tls
+  name: chirpingcanary-co-uk-tls
 spec:
-  secretName: air-monitor-com
+  secretName: chirpingcanary-co-uk
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-  commonName: air-monitor.com
+  commonName: chirpingcanary.co.uk
   dnsNames:
-    - air-monitor.com
-    - www.air-monitor.com
+    - chirpingcanary.co.uk
+    - www.chirpingcanary.co.uk
   acme:
     config:
       - http01:
           ingressClass: nginx
         domains:
-          - air-monitor.com
-          - www.air-monitor.com
+          - chirpingcanary.co.uk
+          - www.chirpingcanary.co.uk
