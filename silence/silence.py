@@ -17,6 +17,12 @@ globals = {}
 globals['air_pollution_file'] = "./data/air-pollution-data.csv"
 globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
 globals['levels'] = ['green', 'yellow', 'amber', 'red']
+globals['messages'] = {
+    'green': 'There is no need to take any additional precautions.',
+    'yellow': 'Avoid strenuous outdoor activity where possible and take precautions to avoid prolonged outdoor exposure.',
+    'amber': 'Avoid all strenuous outdoor activity and limit outdoor exposure.',
+    'red': 'Avoid all outdoor activity. Consider staying home.'
+}
 
 # Get the Twilio account id and authorisation token
 globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
@@ -115,8 +121,8 @@ def send_notifications(topic, level, subscriber_df, client):
 
     message_ids = []
 
-    message_body = 'The air pollution has just reached {} levels the current level is {}'.format(
-        topic, level)
+    message_body = 'The air pollution is currently at {} levels, the current index level is {}. {}'.format(
+        topic, level, globals['messages'][topic])
 
     current_topic_level = globals['levels'].index(topic)
 

@@ -21,7 +21,6 @@ class MyForm extends React.Component {
       <form onSubmit={this.handleSubmit}>
         <label htmlFor="phone">Enter your phone number</label>
         <input id="phone" name="phone" type="text" />
-
         <label htmlFor="topic">Enter your alert level</label>
         <select name="topic" id="topic" type="text">
         <option value="green">Hourly alerts</option>
