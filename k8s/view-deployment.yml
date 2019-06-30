@@ -16,7 +16,7 @@ spec:
         component: web
     spec:
       containers:
-        - name: bird_cage
+        - name: bird-cage
           image: mikemcgarry/canary-bird_cage
           ports:
             - containerPort: 3000

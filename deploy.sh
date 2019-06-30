@@ -17,4 +17,4 @@ kubectl apply -n canary -f k8s
 kubectl set image -n canary deployment/notification-controller-deployment silence=mikemcgarry/canary-silence:$SHA
 kubectl set image -n canary deployment/notification-controller-deployment feathers=mikemcgarry/canary-feathers:$SHA
 kubectl set image -n canary deployment/subscription-controller-deployment chirp=mikemcgarry/canary-chirp:$SHA
-kubectl set image -n canary deployment/view-deployment bird_cage=mikemcgarry/canary-bird_cage:$SHA
+kubectl set image -n canary deployment/view-deployment bird-cage=mikemcgarry/canary-bird_cage:$SHA

@@ -16,7 +16,7 @@ spec:
         component: api
     spec:
       containers:
-        - name: silence
+        - name: chirp
           image: mikemcgarry/canary-chirp
           ports:
             - containerPort: 5000
