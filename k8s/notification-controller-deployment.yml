@@ -21,11 +21,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /tmp/silence/data
-        - name: feathers
-          image: mikemcgarry/canary-feathers
-          volumeMounts:
-            - name: data
-              mountPath: /tmp/feathers/data
           env:
             - name: TWILIO_ACCOUNT_ID
               valueFrom:
@@ -37,6 +32,12 @@ spec:
                 secretKeyRef:
                   name: twilio
                   key: AUTH_TOKEN
+        - name: feathers
+          image: mikemcgarry/canary-feathers
+          volumeMounts:
+            - name: data
+              mountPath: /tmp/feathers/data
+          env:
             - name: AWS_SERVER_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:

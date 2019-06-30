@@ -22,14 +22,10 @@ globals['levels'] = ['green', 'yellow', 'amber', 'red']
 globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
 globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
 
-print (globals['twilio_account_sid'], globals['twilio_auth_token'])
-
 # Create the client
 twilio_client = Client(
     globals['twilio_account_sid'],
     globals['twilio_auth_token'])
-
-
 
 # Import the data
 def import_data(file_path, retry_time):
