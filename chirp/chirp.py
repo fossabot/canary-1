@@ -3,6 +3,7 @@ from flask_cors import CORS
 import boto3
 import json
 import hashlib
+import os
 
 globals = {}
 globals['bucket_name'] = "airpollutionsubscribers"
