@@ -122,7 +122,7 @@ def send_notifications(topic, level, subscriber_df, client):
 
     subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: globals['levels'].index(x))
 
-    relevant_subscribers = subscriber_df[subscriber_df['topic_level'] > current_topic_level]
+    relevant_subscribers = subscriber_df[current_topic_level > subscriber_df['topic_level']]
 
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
@@ -149,10 +149,12 @@ while True:
     # Get the alert category
     level_category = math.floor(current_level / 50)
     # Send notifications to the relevant subscribers
-    send_notifications(
+    messages = send_notifications(
         topic=globals['levels'][level_category],
         level=current_level,
         subscriber_df=subscriber_data,
         client=twilio_client)
+
+    print (messages)
     # Wait an hour before running through the cycle again
     time.sleep(3600)
