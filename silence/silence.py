@@ -18,6 +18,10 @@ globals['air_pollution_file'] = "./data/air-pollution-data.csv"
 globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
 globals['levels'] = ['green', 'yellow', 'amber', 'red']
 
+# Get the Twilio account id and authorisation token
+globals['twilio_account_sid'] = os.environ['TWILIO_ACCOUNT_ID']
+globals['twilio_auth_token'] = os.environ['TWILIO_AUTH_TOKEN']
+
 # Import the data
 def import_data(file_path, retry_time):
     """
@@ -78,18 +82,19 @@ def process_air_pollution_data(air_pollution_data):
     return average_per_timestamp
 
 
-def send_notifications(topic, level, subscriber_df):
+def send_notifications(topic, level, subscriber_df, account_sid, auth_token):
     """
     This function sends a topic (alert level) and the current pollution level
     to the relevant subscribers.
 
     param (str) topic: The current alert level
     param (str) level: The current pollution level
-    """
+    param (Pandas DataFrame) subscriber_df: The subscriber information
+    param (str) account_sid: The twilio account id
+    param (str) auth_token: The twilio authorisation token
 
-    # Get the Twilio account id and authorisation token
-    account_sid = os.environ['TWILIO_ACCOUNT_ID']
-    auth_token = os.environ['TWILIO_AUTH_TOKEN']
+    return (list [str]) message_ids: The ids of the messages that were sent
+    """
 
     # Create the client
     client = Client(account_sid, auth_token)
@@ -105,6 +110,8 @@ def send_notifications(topic, level, subscriber_df):
     # Print tbe message id
     print(message.sid)
     """
+
+    message_ids = []
 
     message_body = 'The air pollution has just reached {} levels the current level is {}'.format(
         topic, level)
@@ -124,7 +131,9 @@ def send_notifications(topic, level, subscriber_df):
         )
 
         # Print the message id
-        print(message.sid)
+        message_ids.append(message.sid)
+
+    return message_ids
 
 # Continuously run the code below
 while True:
@@ -141,6 +150,8 @@ while True:
     send_notifications(
         topic=globals['levels'][level_category],
         level=current_level,
-        subscriber_df=subscriber_data)
-    # Wait 30 seconds before running through the cycle again
+        subscriber_df=subscriber_data,
+        account_sid=globals['twilio_account_sid'],
+        auth_token=globals['twilio_auth_token'])
+    # Wait an hour before running through the cycle again
     time.sleep(3600)

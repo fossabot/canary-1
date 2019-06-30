@@ -40,12 +40,12 @@ spec:
             - name: AWS_SERVER_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: aws
+                  name: aws.athena
                   key: SERVER_PUBLIC_KEY
             - name: AWS_SERVER_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: aws
+                  name: aws.athena
                   key: SERVER_SECRET_KEY
       volumes:
         - name: data
