@@ -1,3 +1,6 @@
 .DS_Store
 *.ipynb
 *.csv
+*node_modules
+*package-lock
+*build

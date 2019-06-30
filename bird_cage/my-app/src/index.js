@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
-import MyForm from './subscribe';
+import MyForm from './Subscribe';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(<div><MyForm /></div>, document.getElementById('root'));
