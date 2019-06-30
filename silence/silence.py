@@ -22,6 +22,15 @@ globals['levels'] = ['green', 'yellow', 'amber', 'red']
 globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
 globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
 
+print (globals['twilio_account_sid'], globals['twilio_auth_token'])
+
+# Create the client
+twilio_client = Client(
+    globals['twilio_account_sid'],
+    globals['twilio_auth_token'])
+
+
+
 # Import the data
 def import_data(file_path, retry_time):
     """
@@ -82,7 +91,7 @@ def process_air_pollution_data(air_pollution_data):
     return average_per_timestamp
 
 
-def send_notifications(topic, level, subscriber_df, account_sid, auth_token):
+def send_notifications(topic, level, subscriber_df, client):
     """
     This function sends a topic (alert level) and the current pollution level
     to the relevant subscribers.
@@ -95,9 +104,6 @@ def send_notifications(topic, level, subscriber_df, account_sid, auth_token):
 
     return (list [str]) message_ids: The ids of the messages that were sent
     """
-
-    # Create the client
-    client = Client(account_sid, auth_token)
 
     """
     # Send a WhatsApp message
@@ -151,7 +157,6 @@ while True:
         topic=globals['levels'][level_category],
         level=current_level,
         subscriber_df=subscriber_data,
-        account_sid=globals['twilio_account_sid'],
-        auth_token=globals['twilio_auth_token'])
+        client=twilio_client)
     # Wait an hour before running through the cycle again
     time.sleep(3600)
