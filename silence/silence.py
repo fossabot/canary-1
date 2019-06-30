@@ -122,7 +122,7 @@ def send_notifications(topic, level, subscriber_df, client):
 
     subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: globals['levels'].index(x))
 
-    relevant_subscribers = subscriber_df[current_topic_level > subscriber_df['topic_level']]
+    relevant_subscribers = subscriber_df[current_topic_level >= subscriber_df['topic_level']]
 
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
