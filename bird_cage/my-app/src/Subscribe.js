@@ -19,13 +19,18 @@ class MyForm extends React.Component {
   render() {
     return (
       <form onSubmit={this.handleSubmit}>
-        <label htmlFor="phone">Enter phone number</label>
+        <label htmlFor="phone">Enter your phone number</label>
         <input id="phone" name="phone" type="text" />
 
-        <label htmlFor="topic">Enter topic</label>
-        <input id="topic" name="topic" type="text" />
+        <label htmlFor="topic">Enter your alert level</label>
+        <select name="topic" id="topic" type="text">
+        <option value="green">Hourly alerts</option>
+        <option value="yellow">Highly sensitive</option>
+        <option value="amber">Moderately sensitive</option>
+        <option value="red">No known sensitivity</option>
+        </select>
 
-        <button>Send data!</button>
+        <button>Subscribe!</button>
       </form>
     );
   }
