@@ -126,11 +126,14 @@ def send_notifications(topic, level, subscriber_df, client):
 
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
-        message = client.messages.create(
-            from_='+442033225373',
-            body=message_body,
-            to=subscriber_phone
-        )
+        try:
+            message = client.messages.create(
+                from_='+442033225373',
+                body=message_body,
+                to=subscriber_phone
+            )
+        except:
+            pass
 
         # Print the message id
         message_ids.append(message.sid)
