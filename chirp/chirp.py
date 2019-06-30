@@ -45,6 +45,11 @@ def save_user_to_s3(s3, bucket_name, json_payload):
     s3.Object(bucket_name, 'subscriber-{}.json'.format(
         phone_hash.hexdigest())).put(Body=json.dumps(json_payload))
 
+def remove_user_from_s3(s3, bucket_name, phone):
+    phone_hash = hashlib.md5(json_payload['phone'].encode('utf-8'))
+    s3.Object(bucket_name, 'subscriber-{}.json'.format(
+        phone_hash.hexdigest())).delete()
+
 # API GET route for subscribing
 @app.route("subscribe", methods=['POST'])
 def subscribe_user():
@@ -70,4 +75,8 @@ def unsubscribe_user():
     This function unsubscribes a user from the appropriate topic
     """
     phone_number, topic = get_details_from_request(request.form)
+    remove_user_from_s3(
+        s3=globals['s3'],
+        bucket_name=globals['bucket_name'],
+        phone=phone_number)
     # unsubscribe the number to the appropriate topic using Twilio
