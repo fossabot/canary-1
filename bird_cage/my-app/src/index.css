@@ -12,3 +12,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+.mt-1 {
+  margin-bottom: 1rem !important;
+}
+
+.center {
+  text-align: center;
+  margin: auto;
+}
+
+.header-font {
+  color: gold;
+  vertical-align: middle;
+  font-family: "Arial Black"
+}
+
+.arial {
+  font-family: Arial
+}
