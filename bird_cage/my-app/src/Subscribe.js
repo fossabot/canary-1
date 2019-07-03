@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import logo from './img/canary.png';
-import { Col, Button, Form, FormGroup, Label, Input, FormText, Row, CardImg, Badge } from 'reactstrap';
-import Container from "reactstrap/es/Container";
-
+import { Col, Button, Form, FormGroup, Label, Input, FormText, Row, CardImg, Badge, Container } from 'reactstrap';
 
 const ColoredLine = ({ color }) => (
     <hr
@@ -33,7 +31,7 @@ class MyForm extends React.Component {
 
   render() {
     return (
-        <Container fluid="True">
+        <Container fluid="true">
             <Row className="mt-1">
                 <Col className="center"><img src = {logo}/><Badge color="danger">Beta</Badge></Col>
                 <Col className="flex-xs-middle">
