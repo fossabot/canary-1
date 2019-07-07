@@ -138,12 +138,12 @@ def send_notifications(topic, level, subscriber_df, client):
                 body=message_body,
                 to=subscriber_phone
             )
+
+            # Print the message id
+            message_ids.append(message.sid)
         except:
             pass
-
-        # Print the message id
-        message_ids.append(message.sid)
-
+        
     return message_ids
 
 # Continuously run the code below
