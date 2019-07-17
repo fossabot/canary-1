@@ -11,4 +11,4 @@ ENV TWILIO_AUTH_TOKEN $TWILIO_AUTH_TOKEN
 
 COPY . .
 
-CMD ["python", "silence.py"]
+CMD ["python", "-u", "silence.py"]

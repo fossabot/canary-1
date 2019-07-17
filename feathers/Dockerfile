@@ -12,4 +12,4 @@ ENV AWS_SERVER_PUBLIC_KEY $AWS_SERVER_PUBLIC_KEY
 ENV AWS_SERVER_SECRET_KEY $AWS_SERVER_SECRET_KEY
 
 
-CMD ["python", "feathers.py"]
+CMD ["python", "-u", "feathers.py"]

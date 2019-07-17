@@ -143,7 +143,7 @@ def send_notifications(topic, level, subscriber_df, client):
             message_ids.append(message.sid)
         except:
             pass
-        
+
     return message_ids
 
 # Continuously run the code below
@@ -157,6 +157,7 @@ while True:
     current_level = round(average_per_timestamp.iloc[0]['air_quality_index (aqi)']['mean'], 2)
     # Get the alert category
     level_category = math.floor(current_level / 50)
+    print ('The current pollution level is {} which is at the {} level'.format(current_level, level_category))
     # Send notifications to the relevant subscribers
     messages = send_notifications(
         topic=globals['levels'][level_category],
