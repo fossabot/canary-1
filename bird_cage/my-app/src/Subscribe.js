@@ -54,39 +54,64 @@ function ConfirmSubscription(props) {
   );
 };
 
+
+function SubscriptionConfirmed(props) {
+  return (
+    <Col>
+        <p>
+        Congratulations you have registered for Chirping Canary.
+        </p>
+    </Col>
+  );
+};
+
 class Subscribe extends Component {
 
   constructor() {
     super();
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleSubmit2 = this.handleSubmit2.bind(this);
+    this.handleSubmitSubscribe = this.handleSubmitSubscribe.bind(this);
+    this.handleSubmitConfirmSubscription = this.handleSubmitConfirmSubscription.bind(this);
     this.state = {
       flow: 'home'
     };
   };
 
-  handleSubmit(event) {
+  handleSubmitSubscribe(event) {
+
     event.preventDefault();
     const data = new FormData(event.target);
 
     fetch('/api/subscribe', {
       method: 'POST',
       body: data,
+    })
+    .then(response => response.json())
+    .then(responseData => {
+      if (responseData.status_code == 200) {
+        this.setState({flow: "confirm_subscription"})
+      } else {
+        this.setState({flow: "invalid_phone"})
+      }
     });
 
-    this.setState({flow: "confirmsubscription"})
+
   };
 
-  handleSubmit2(event) {
+  handleSubmitConfirmSubscription(event) {
     event.preventDefault();
     const data = new FormData(event.target);
+    let result
 
-    fetch('/api/subscribe', {
+    result = fetch('/api/subscribe/confirm', {
       method: 'POST',
       body: data,
     });
 
-    this.setState({flow: "confirmsubscription"})
+    if (result) {
+      this.setState({flow: "subscription_confirmed"})
+    } else {
+      this.setState({flow: "subscription_confirmation_failed"})
+    }
   };
 
   render() {
@@ -95,10 +120,13 @@ class Subscribe extends Component {
     let currentForm
 
     if (flow == 'home') {
-      currentForm = <Home onClick={this.handleSubmit}/>;
-    } else if (flow == 'confirmsubscription')  {
-      currentForm = <ConfirmSubscription onClick={this.handleSubmit2}/>;
+      currentForm = <Home onClick={this.handleSubmitSubscribe}/>;
+    } else if (flow == 'confirm_subscription')  {
+      currentForm = <ConfirmSubscription onClick={this.handleSubmitConfirmSubscription}/>;
+    } else if (flow == 'subscription_confirmed') {
+      currentForm = <SubscriptionConfirmed/>
     }
+
 
     return (
         <Container fluid="true">

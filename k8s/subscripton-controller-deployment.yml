@@ -31,3 +31,13 @@ spec:
                 secretKeyRef:
                   name: aws.s3
                   key: SERVER_SECRET_KEY
+            - name: TWILIO_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: twilio
+                  key: ACCOUNT_ID
+            - name: TWILIO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: twilio
+                  key: AUTH_TOKEN
