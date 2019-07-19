@@ -2,22 +2,68 @@ import React, { Component } from 'react';
 import logo from './img/canary.png';
 import { Col, Button, Form, FormGroup, Label, Input, FormText, Row, CardImg, Badge, Container } from 'reactstrap';
 
-const ColoredLine = ({ color }) => (
-    <hr
-        style={{
-            color: color,
-            backgroundColor: color,
-            height: 50
-        }}
-    />
-);
+
+function Home(props) {
+  return (
+    <Col>
+        <Form onSubmit={props.onClick}>
+            <FormGroup row>
+                <Label for="phone" sm={2}>Phone</Label>
+                <Col sm={6}>
+                    <Input id="phone" name="phone" type="text" placeholder="07719143007"/>
+                </Col>
+            </FormGroup>
+            <FormGroup row>
+                <Label for="topic" sm={2}>Alert level</Label>
+                <Col sm={6}>
+                    <Input type="select" name="topic" id="topic">
+                        <option value="green">Hourly alerts</option>
+                        <option value="yellow">Highly sensitive</option>
+                        <option value="amber">Moderately sensitive</option>
+                        <option value="red">No known sensitivity</option>
+                    </Input>
+                </Col>
+            </FormGroup>
+            <Col sm={6}>
+            <Button color="danger" align='right'>Subscribe</Button>
+            </Col>
+            <Col sm={6}>
+            <Button color="secondary" align='right'>UnSubscribe</Button>
+            </Col>
+        </Form>
+    </Col>
+  );
+};
 
 
-class MyForm extends React.Component {
+function ConfirmSubscription(props) {
+  return (
+    <Col>
+        <Form onSubmit={props.onClick}>
+            <FormGroup row>
+                <Label for="verifycode" sm={2}>Verification Code</Label>
+                <Col sm={6}>
+                    <Input id="verifycode" name="verifycode" type="text" placeholder=""/>
+                </Col>
+            </FormGroup>
+            <Col sm={6}>
+            <Button color="danger" align='right'>Confirm Subscription</Button>
+            </Col>
+        </Form>
+    </Col>
+  );
+};
+
+class Subscribe extends Component {
+
   constructor() {
     super();
     this.handleSubmit = this.handleSubmit.bind(this);
-  }
+    this.handleSubmit2 = this.handleSubmit2.bind(this);
+    this.state = {
+      flow: 'home'
+    };
+  };
 
   handleSubmit(event) {
     event.preventDefault();
@@ -27,26 +73,35 @@ class MyForm extends React.Component {
       method: 'POST',
       body: data,
     });
-  }
+
+    this.setState({flow: "confirmsubscription"})
+  };
+
+  handleSubmit2(event) {
+    event.preventDefault();
+    const data = new FormData(event.target);
+
+    fetch('/api/subscribe', {
+      method: 'POST',
+      body: data,
+    });
+
+    this.setState({flow: "confirmsubscription"})
+  };
 
   render() {
+
+    const flow = this.state.flow
+    let currentForm
+
+    if (flow == 'home') {
+      currentForm = <Home onClick={this.handleSubmit}/>;
+    } else if (flow == 'confirmsubscription')  {
+      currentForm = <ConfirmSubscription onClick={this.handleSubmit2}/>;
+    }
+
     return (
         <Container fluid="true">
-            <Row className="mt-1">
-                <Col className="center"><img src = {logo}/><Badge color="danger">Beta</Badge></Col>
-                <Col className="flex-xs-middle">
-                    <h1 className="header-font">
-                        <br></br>
-                        <p>Chirping Canary</p>
-                        <p className="arial">Air Pollution Early Warning System</p>
-                    </h1>
-                </Col>
-            </Row>
-
-            <Row className="mt-1">
-                <Col><ColoredLine color="gold" /></Col>
-            </Row>
-
             <Row className="mt-1">
                 <Col>
                     <p>
@@ -67,33 +122,12 @@ class MyForm extends React.Component {
                     every time the air pollution reaches a level that affects you.
                     </p>
                 </Col>
+                {currentForm}
 
-                <Col>
-                    <Form onSubmit={this.handleSubmit}>
-                        <FormGroup row>
-                            <Label for="phone" sm={2}>Phone</Label>
-                            <Col sm={6}>
-                                <Input id="phone" name="phone" type="text" placeholder="07719143007"/>
-                            </Col>
-                        </FormGroup>
-                        <FormGroup row>
-                            <Label for="topic" sm={2}>Alert level</Label>
-                            <Col sm={6}>
-                                <Input type="select" name="topic" id="topic">
-                                    <option value="green">Hourly alerts</option>
-                                    <option value="yellow">Highly sensitive</option>
-                                    <option value="amber">Moderately sensitive</option>
-                                    <option value="red">No known sensitivity</option>
-                                </Input>
-                            </Col>
-                        </FormGroup>
-                        <Button color="danger" align='right'>Subscribe!</Button>
-                    </Form>
-                </Col>
             </Row>
         </Container>
     );
   }
 }
 
-export default MyForm
+export default Subscribe
