@@ -41,9 +41,9 @@ function ConfirmSubscription(props) {
     <Col>
         <Form onSubmit={props.onClick}>
             <FormGroup row>
-                <Label for="verifycode" sm={2}>Verification Code</Label>
+                <Label for="code" sm={2}>Verification Code</Label>
                 <Col sm={6}>
-                    <Input id="verifycode" name="verifycode" type="text" placeholder=""/>
+                    <Input id="code" name="code" type="text" placeholder=""/>
                 </Col>
             </FormGroup>
             <Col sm={6}>
@@ -65,6 +65,18 @@ function SubscriptionConfirmed(props) {
   );
 };
 
+
+
+function CurrentError(props) {
+  return (
+    <Col>
+        <p>
+        {props.errorMessage}
+        </p>
+    </Col>
+  );
+};
+
 class Subscribe extends Component {
 
   constructor() {
@@ -72,7 +84,9 @@ class Subscribe extends Component {
     this.handleSubmitSubscribe = this.handleSubmitSubscribe.bind(this);
     this.handleSubmitConfirmSubscription = this.handleSubmitConfirmSubscription.bind(this);
     this.state = {
-      flow: 'home'
+      flow: 'home',
+      phone: '',
+      currentError: ''
     };
   };
 
@@ -81,37 +95,43 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
-    fetch('/api/subscribe', {
+    fetch('http://0.0.0.0:5000/subscribe', {
       method: 'POST',
       body: data,
     })
-    .then(response => response.json())
-    .then(responseData => {
-      if (responseData.status_code == 200) {
+    .then(response => {
+      if (response.status == 200) {
+        this.setState({phone: data.get('phone')})
         this.setState({flow: "confirm_subscription"})
+        this.setState({currentError: ''})
       } else {
-        this.setState({flow: "invalid_phone"})
+        let responseBody
+        responseBody = response.json()
+        this.setState({currentError: responseBody.message})
       }
     });
-
-
   };
 
   handleSubmitConfirmSubscription(event) {
+
     event.preventDefault();
     const data = new FormData(event.target);
-    let result
+    data.append('phone', this.state.phone);
 
-    result = fetch('/api/subscribe/confirm', {
+    fetch('http://0.0.0.0:5000/subscribe/verify', {
       method: 'POST',
       body: data,
+    })
+    .then(response => {
+      if (response.status == 200) {
+        this.setState({flow: "subscription_confirmed"})
+        this.setState({currentError: ''})
+      } else {
+        let responseBody
+        responseBody = response.json()
+        this.setState({currentError: responseBody.message})
+      }
     });
-
-    if (result) {
-      this.setState({flow: "subscription_confirmed"})
-    } else {
-      this.setState({flow: "subscription_confirmation_failed"})
-    }
   };
 
   render() {
@@ -126,6 +146,9 @@ class Subscribe extends Component {
     } else if (flow == 'subscription_confirmed') {
       currentForm = <SubscriptionConfirmed/>
     }
+
+    let currentErrorMessage
+    currentErrorMessage = <CurrentError errorMessage={this.state.currentError}/>;
 
 
     return (
@@ -151,7 +174,7 @@ class Subscribe extends Component {
                     </p>
                 </Col>
                 {currentForm}
-
+                {currentErrorMessage}
             </Row>
         </Container>
     );
