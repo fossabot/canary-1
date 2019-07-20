@@ -145,7 +145,7 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
-    fetch('http://0.0.0.0:5000/subscribe', {
+    fetch('/api/subscribe', {
       method: 'POST',
       body: data,
     })
@@ -166,7 +166,7 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
-    fetch('http://0.0.0.0:5000/unsubscribe', {
+    fetch('/api/unsubscribe', {
       method: 'POST',
       body: data,
     })
@@ -193,7 +193,7 @@ class Subscribe extends Component {
     const data = new FormData(event.target);
     data.append('phone', this.state.phone);
 
-    fetch('http://0.0.0.0:5000/unsubscribe/verify', {
+    fetch('/api/unsubscribe/verify', {
       method: 'POST',
       body: data,
     })
@@ -214,7 +214,7 @@ class Subscribe extends Component {
     const data = new FormData(event.target);
     data.append('phone', this.state.phone);
 
-    fetch('http://0.0.0.0:5000/subscribe/verify', {
+    fetch('/api/subscribe/verify', {
       method: 'POST',
       body: data,
     })
