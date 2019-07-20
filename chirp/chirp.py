@@ -251,12 +251,6 @@ def verify_code(phone_number_hash, code, max_attempts, max_elapsed_time):
 
     verification_status = {}
 
-    # Check that the user has been sent a verification code
-    for key in globals['verification_codes'].keys():
-        print (key)
-
-    print (phone_number_hash)
-
     if phone_number_hash not in globals['verification_codes'].keys():
         verification_status['success'] = False
         verification_status['message'] = "No record of sending a verification code to this user"

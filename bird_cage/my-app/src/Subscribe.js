@@ -95,19 +95,18 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
-    fetch('http://0.0.0.0:5000/subscribe', {
+    fetch('/api/subscribe', {
       method: 'POST',
       body: data,
     })
     .then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         this.setState({phone: data.get('phone')})
         this.setState({flow: "confirm_subscription"})
         this.setState({currentError: ''})
       } else {
-        let responseBody
-        responseBody = response.json()
-        this.setState({currentError: responseBody.message})
+        response.json()
+        .then(data => this.setState({currentError: data.message}))
       }
     });
   };
@@ -118,18 +117,17 @@ class Subscribe extends Component {
     const data = new FormData(event.target);
     data.append('phone', this.state.phone);
 
-    fetch('http://0.0.0.0:5000/subscribe/verify', {
+    fetch('/api/subscribe/verify', {
       method: 'POST',
       body: data,
     })
     .then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         this.setState({flow: "subscription_confirmed"})
         this.setState({currentError: ''})
       } else {
-        let responseBody
-        responseBody = response.json()
-        this.setState({currentError: responseBody.message})
+        response.json()
+        .then(data => this.setState({currentError: data.message}))
       }
     });
   };
@@ -141,15 +139,14 @@ class Subscribe extends Component {
 
     if (flow == 'home') {
       currentForm = <Home onClick={this.handleSubmitSubscribe}/>;
-    } else if (flow == 'confirm_subscription')  {
+    } else if (flow === 'confirm_subscription')  {
       currentForm = <ConfirmSubscription onClick={this.handleSubmitConfirmSubscription}/>;
-    } else if (flow == 'subscription_confirmed') {
+    } else if (flow === 'subscription_confirmed') {
       currentForm = <SubscriptionConfirmed/>
     }
 
     let currentErrorMessage
     currentErrorMessage = <CurrentError errorMessage={this.state.currentError}/>;
-
 
     return (
         <Container fluid="true">
