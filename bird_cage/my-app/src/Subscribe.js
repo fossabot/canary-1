@@ -273,7 +273,7 @@ class Subscribe extends Component {
                     every time the air pollution reaches a level that affects you.
                     </p>
                     <p>
-                    Click here to <Button color="secondary" align='right' size="sm" onClick={this.clickUnsubscribe}>Usubscribe</Button>
+                    Click here to <Button color="secondary" align='right' size="sm" onClick={this.clickUnsubscribe}>Unsubscribe</Button>
                     </p>
                 </Col>
                 <Col>
