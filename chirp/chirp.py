@@ -387,17 +387,22 @@ def confirm_subscription():
         resp.status_code = 400
         return resp
 
+    level = globals['verification_codes'][phone_hash]['level']
+
+    save_user_payload = {
+        "phone": phone,
+        "topic": level
+    }
+
     save_status = save_user_to_s3(
         s3=globals['s3'],
         bucket_name=globals['bucket_name'],
-        json_payload=request_params)
+        json_payload=save_user_payload)
 
     if not save_status["success"]:
         resp = jsonify(success=False, message=save_status['message'])
         resp.status_code = 400
         return resp
-
-    level = globals['verification_codes'][phone_hash]['level']
 
     confirmation_status = send_subscription_confirmation(twilio_client, phone, level)
 
