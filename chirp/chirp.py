@@ -15,6 +15,13 @@ globals['bucket_name'] = "airpollutionsubscribers"
 # Get the Twilio account id and authorisation token
 globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
 globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
+# Maps the levels to the subscribers input for sending messages
+globals['levels'] = {
+    "green": "hourly",
+    "yellow": "highly sensitive",
+    "amber": "moderately sensitive",
+    "red": "no known sensitivity"
+}
 # Temporay storage for the verification codes
 globals['verification_codes'] = {}
 
@@ -134,12 +141,25 @@ def remove_user_from_s3(s3, bucket_name, phone):
     param: (str) bucket_name: The bucket name in S3 to store the user information
     param: (str) phone: The phone number of the subscriber whos information should
     be deleted
+
+    return: (dict) delete_status: Holds details about the status of deleting the user info
     """
 
-    phone_hash = hash_phone_number(json_payload['phone'])
+    delete_status = {}
 
-    s3.Object(bucket_name, 'subscriber-{}.json'.format(
-        phone_hash)).delete()
+    phone_hash = hash_phone_number(phone)
+
+    try:
+        s3.Object(bucket_name, 'subscriber-{}.json'.format(
+            phone_hash)).delete()
+    except:
+        delete_status['success'] = False
+        delete_status['message'] = 'The deleting of the user failed due to an unknown error'
+        return delete_status
+
+    delete_status['success'] = True
+    delete_status['message'] = 'The subscriber has been removed succesfully'
+    return delete_status
 
 
 def issue_verification_code(client, phone_number, sub_type, level=None):
@@ -172,13 +192,13 @@ def issue_verification_code(client, phone_number, sub_type, level=None):
     # Generate an appropriate message if the user is subscribing
     if sub_type == 'Subscribe':
         message_body = "To complete your subscription to Chirping Canary for {} alerts your verification code is {}".format(
-            level, code
+            globals['levels'][level], code
         )
 
     # Generate an appropriate message if the user is unsubscribing
     elif sub_type == 'Unsubscribe':
-        message_body = "To unsubscribe from Chirping Canary {} alerts your verification code is {}".format(
-            level, code
+        message_body = "To unsubscribe from Chirping Canary your verification code is {}".format(
+            code
         )
 
     # Attempt to send a message to the user with the verification code
@@ -213,7 +233,8 @@ def send_subscription_confirmation(client, phone_number, level):
 
     confirmation_status = {}
 
-    message_body = "Congratulations, you are now subscribed to {} alerts from Chirping Canary".format(level)
+    message_body = "Congratulations, you are now subscribed to {} alerts from Chirping Canary".format(
+        globals['levels'][level])
 
     try:
         message = client.messages.create(
@@ -236,7 +257,21 @@ def verify_phone_number(phone_number):
     This verifies that a phone number has the right format. It does not guarantee
     that it is a legitimate phone number.
     """
-    return True
+    phone_verification = {}
+    length = 11
+
+    phone_number = phone_number.replace(" ", "")
+    phone_number = phone_number.replace("+44", "0")
+
+    if (len(phone_number) != length) or (phone_number[:2] != '07'):
+        phone_verification['success'] = False
+        phone_verification['message'] = 'The phone number is of an invalid format, please ensure that it starts with 07 rather than +44 and has 11 digits'
+        return phone_verification
+
+    phone_verification['success'] = True
+    phone_verification['message'] = 'The phone number has been validated succesfully.'
+
+    return phone_verification
 
 
 def verify_code(phone_number_hash, code, max_attempts, max_elapsed_time):
@@ -315,8 +350,11 @@ def subscribe_user():
     topic = request_params["topic"]
 
     # Verify that the phone number has the correct format
-    if not verify_phone_number(phone):
-        resp = jsonify(success=False, message="The phone number does not have a valid UK mobile number format")
+    verify_phone = verify_phone_number(phone)
+
+    # Verify that the phone number has the correct format
+    if not verify_phone['success']:
+        resp = jsonify(success=False, message=verify_phone['message'])
         resp.status_code = 400
         return resp
 
@@ -349,6 +387,62 @@ def subscribe_user():
     resp.status_code = 200
     return resp
 
+
+# API POST rote for unsubscribing
+@app.route("/unsubscribe", methods=['POST'])
+def unsubscribe_user():
+    """
+    This function unsubscribes a user from the appropriate topic
+    """
+    # The parameters required from the POST request
+    parameters = ["phone"]
+    # Get the details from the POST request assuming that they exist
+    request_params = get_details_from_request(request.form, parameters)
+
+    # If the parameters didn't exist return a bad request code
+    if request_params["status_code"] != 200:
+        resp = jsonify(success=False, message="Incorrect parameters in request")
+        resp.status_code = request_params["status_code"]
+        return resp
+
+    # Pull off the parameters
+    phone = request_params["phone"]
+
+    verify_phone = verify_phone_number(phone)
+
+    # Verify that the phone number has the correct format
+    if not verify_phone['success']:
+        resp = jsonify(success=False, message=verify_phone['message'])
+        resp.status_code = 400
+        return resp
+
+    # If so, issue a verification code
+    verify_code = issue_verification_code(
+        client=twilio_client,
+        phone_number=request_params["phone"],
+        sub_type="Unsubscribe"
+    )
+
+    # If there were any issues sending the verification code
+    if not verify_code["success"]:
+        resp = jsonify(success=False, message=verify_code["message"])
+        resp.status_code = 400
+        return resp
+
+    # Hash the phone number for use as a key in a dictionary to temporarily hold the code and level
+    phone_hash = hash_phone_number(phone)
+
+    # Save the details to the global dictionary for use in verification confirmation
+    globals['verification_codes'][phone_hash] = {
+        "verify_code": verify_code['code'],
+        "verification_datetime": datetime.datetime.now(pytz.UTC),
+        "attempts": 0
+    }
+
+    resp = jsonify(success=True)
+    resp.status_code = 200
+    return resp
+    
 
 # API POST route for confirming a subscription
 @app.route("/subscribe/verify", methods=['POST'])
@@ -412,19 +506,47 @@ def confirm_subscription():
     return resp
 
 
-# API GET rote for unsubscribing
-@app.route("/unsubscribe", methods=['POST'])
-def unsubscribe_user():
+# API POST rote for unsubscribing
+@app.route("/unsubscribe/verify", methods=['POST'])
+def confirm_unsubscription():
     """
     This function unsubscribes a user from the appropriate topic
     """
-    phone_number, topic = get_details_from_request(request.form)
-    remove_user_from_s3(
+
+    parameters = ["phone", "code"]
+    request_params= get_details_from_request(request.form, parameters)
+
+    if request_params["status_code"] != 200:
+        resp = jsonify(success=False, message="The parameters were incorrect")
+        resp.status_code = request_params["status_code"]
+        return resp
+
+    phone = request_params["phone"]
+    code = request_params["code"]
+
+    phone_hash = hash_phone_number(phone)
+
+    verification = verify_code(
+        phone_number_hash=phone_hash,
+        code=code,
+        max_attempts=3,
+        max_elapsed_time=10)
+
+    if not verification["success"]:
+        resp = jsonify(success=False, message=verification['message'])
+        resp.status_code = 400
+        return resp
+
+    delete_status = remove_user_from_s3(
         s3=globals['s3'],
         bucket_name=globals['bucket_name'],
-        phone=phone_number)
+        phone=phone)
+
+    if not delete_status["success"]:
+        resp = jsonify(success=False, message=delete_status['message'])
+        resp.status_code = 400
+        return resp
 
     resp = jsonify(success=True)
     resp.status_code = 200
     return resp
-    # unsubscribe the number to the appropriate topic using Twilio

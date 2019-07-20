@@ -27,8 +27,44 @@ function Home(props) {
             <Col sm={6}>
             <Button color="danger" align='right'>Subscribe</Button>
             </Col>
+        </Form>
+    </Col>
+  );
+};
+
+
+function Unsubscribe(props) {
+  return (
+    <Col>
+        <Form onSubmit={props.onClick}>
+            <FormGroup row>
+                <Label for="phone" sm={2}>Phone</Label>
+                <Col sm={6}>
+                    <Input id="phone" name="phone" type="text" placeholder="07719143007"/>
+                </Col>
+            </FormGroup>
             <Col sm={6}>
-            <Button color="secondary" align='right'>UnSubscribe</Button>
+            <Button color="secondary" align='right'>Unsubscribe</Button>
+            </Col>
+        </Form>
+    </Col>
+  );
+};
+
+
+function ComfirmUnsubscribe(props) {
+  return (
+    <Col>
+        <Form onSubmit={props.onClick}>
+            <FormGroup row>
+                <p>A six digit verification code has been sent to {props.phone}, please enter it to unsubscribe.</p>
+                <Label for="code">Verification Code</Label>
+                <Col sm={6}>
+                    <Input id="code" name="code" type="text" placeholder=""/>
+                </Col>
+            </FormGroup>
+            <Col sm={6}>
+            <Button color="secondary" align='right'>Confirm Unsubscription</Button>
             </Col>
         </Form>
     </Col>
@@ -41,7 +77,8 @@ function ConfirmSubscription(props) {
     <Col>
         <Form onSubmit={props.onClick}>
             <FormGroup row>
-                <Label for="code" sm={2}>Verification Code</Label>
+                <p>A six digit verification code has been sent to {props.phone}, please enter it to complete your subscription</p>
+                <Label for="code">Verification Code</Label>
                 <Col sm={6}>
                     <Input id="code" name="code" type="text" placeholder=""/>
                 </Col>
@@ -66,6 +103,16 @@ function SubscriptionConfirmed(props) {
 };
 
 
+function UnsubscribeConfirmed(props) {
+  return (
+    <Col>
+        <p>
+        You have succesfully unsubcribed from Chirping Canary.
+        </p>
+    </Col>
+  );
+};
+
 
 function CurrentError(props) {
   return (
@@ -83,6 +130,9 @@ class Subscribe extends Component {
     super();
     this.handleSubmitSubscribe = this.handleSubmitSubscribe.bind(this);
     this.handleSubmitConfirmSubscription = this.handleSubmitConfirmSubscription.bind(this);
+    this.handleSubmitUnsubscribe = this.handleSubmitUnsubscribe.bind(this);
+    this.clickUnsubscribe = this.clickUnsubscribe.bind(this);
+    this.handleSubmitConfirmUnSubscribe = this.handleSubmitConfirmUnSubscribe.bind(this);
     this.state = {
       flow: 'home',
       phone: '',
@@ -95,7 +145,7 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
-    fetch('/api/subscribe', {
+    fetch('http://0.0.0.0:5000/subscribe', {
       method: 'POST',
       body: data,
     })
@@ -111,13 +161,60 @@ class Subscribe extends Component {
     });
   };
 
+  handleSubmitUnsubscribe(event) {
+
+    event.preventDefault();
+    const data = new FormData(event.target);
+
+    fetch('http://0.0.0.0:5000/unsubscribe', {
+      method: 'POST',
+      body: data,
+    })
+    .then(response => {
+      if (response.status === 200) {
+        this.setState({phone: data.get('phone')})
+        this.setState({flow: "confirm_unsubscribe"})
+        this.setState({currentError: ''})
+      } else {
+        response.json()
+        .then(data => this.setState({currentError: data.message}))
+      }
+    });
+  };
+
+  clickUnsubscribe(event) {
+    this.setState({flow: "unsubscribe"})
+  }
+
+
+  handleSubmitConfirmUnSubscribe(event) {
+
+    event.preventDefault();
+    const data = new FormData(event.target);
+    data.append('phone', this.state.phone);
+
+    fetch('http://0.0.0.0:5000/unsubscribe/verify', {
+      method: 'POST',
+      body: data,
+    })
+    .then(response => {
+      if (response.status === 200) {
+        this.setState({flow: "unsubscription_confirmed"})
+        this.setState({currentError: ''})
+      } else {
+        response.json()
+        .then(data => this.setState({currentError: data.message}))
+      }
+    });
+  };
+
   handleSubmitConfirmSubscription(event) {
 
     event.preventDefault();
     const data = new FormData(event.target);
     data.append('phone', this.state.phone);
 
-    fetch('/api/subscribe/verify', {
+    fetch('http://0.0.0.0:5000/subscribe/verify', {
       method: 'POST',
       body: data,
     })
@@ -137,12 +234,18 @@ class Subscribe extends Component {
     const flow = this.state.flow
     let currentForm
 
-    if (flow == 'home') {
+    if (flow === 'home') {
       currentForm = <Home onClick={this.handleSubmitSubscribe}/>;
     } else if (flow === 'confirm_subscription')  {
-      currentForm = <ConfirmSubscription onClick={this.handleSubmitConfirmSubscription}/>;
+      currentForm = <ConfirmSubscription onClick={this.handleSubmitConfirmSubscription} phone={this.state.phone}/>;
     } else if (flow === 'subscription_confirmed') {
-      currentForm = <SubscriptionConfirmed/>
+      currentForm = <SubscriptionConfirmed/>;
+    } else if (flow === 'unsubscribe') {
+      currentForm = <Unsubscribe onClick={this.handleSubmitUnsubscribe}/>;
+    } else if (flow === 'confirm_unsubscribe') {
+      currentForm = <ComfirmUnsubscribe onClick={this.handleSubmitConfirmUnSubscribe} phone={this.state.phone}/>;
+    } else if (flow === 'unsubscription_confirmed') {
+      currentForm = <UnsubscribeConfirmed/>;
     }
 
     let currentErrorMessage
@@ -169,9 +272,14 @@ class Subscribe extends Component {
                     Enter your phone number and select your sensitivity level to air pollution to receive free notifcations
                     every time the air pollution reaches a level that affects you.
                     </p>
+                    <p>
+                    Click here to <Button color="secondary" align='right' size="sm" onClick={this.clickUnsubscribe}>Usubscribe</Button>
+                    </p>
                 </Col>
+                <Col>
                 {currentForm}
                 {currentErrorMessage}
+                </Col>
             </Row>
         </Container>
     );
