@@ -27,9 +27,6 @@ function Home(props) {
             <Col sm={6}>
             <Button color="danger" align='right'>Subscribe</Button>
             </Col>
-            <Col sm={6}>
-            <Button color="secondary" align='right'>UnSubscribe</Button>
-            </Col>
         </Form>
     </Col>
   );
@@ -41,7 +38,8 @@ function ConfirmSubscription(props) {
     <Col>
         <Form onSubmit={props.onClick}>
             <FormGroup row>
-                <Label for="code" sm={2}>Verification Code</Label>
+                <p>A six digit verification code has been sent to {props.phone}, please enter it to complete your subscription</p>
+                <Label for="code">Verification Code</Label>
                 <Col sm={6}>
                     <Input id="code" name="code" type="text" placeholder=""/>
                 </Col>
@@ -95,7 +93,7 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
-    fetch('/api/subscribe', {
+    fetch('http://0.0.0.0:5000/subscribe', {
       method: 'POST',
       body: data,
     })
@@ -117,7 +115,7 @@ class Subscribe extends Component {
     const data = new FormData(event.target);
     data.append('phone', this.state.phone);
 
-    fetch('/api/subscribe/verify', {
+    fetch('http://0.0.0.0:5000/subscribe/verify', {
       method: 'POST',
       body: data,
     })
@@ -137,10 +135,10 @@ class Subscribe extends Component {
     const flow = this.state.flow
     let currentForm
 
-    if (flow == 'home') {
+    if (flow === 'home') {
       currentForm = <Home onClick={this.handleSubmitSubscribe}/>;
     } else if (flow === 'confirm_subscription')  {
-      currentForm = <ConfirmSubscription onClick={this.handleSubmitConfirmSubscription}/>;
+      currentForm = <ConfirmSubscription onClick={this.handleSubmitConfirmSubscription} phone={this.state.phone}/>;
     } else if (flow === 'subscription_confirmed') {
       currentForm = <SubscriptionConfirmed/>
     }
@@ -170,8 +168,10 @@ class Subscribe extends Component {
                     every time the air pollution reaches a level that affects you.
                     </p>
                 </Col>
+                <Col>
                 {currentForm}
                 {currentErrorMessage}
+                </Col>
             </Row>
         </Container>
     );
