@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import logo from './img/canary.png';
-import { Col, Button, Form, FormGroup, Label, Input, FormText, Row, CardImg, Badge, Container } from 'reactstrap';
+import { Col, Button, Form, FormGroup, Label, Input, Row, Container } from 'reactstrap';
 
 
 function Home(props) {

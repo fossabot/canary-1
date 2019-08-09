@@ -18,7 +18,7 @@ class Header extends Component {
     return (
         <Container fluid="true">
             <Row className="mt-1">
-                <Col className="center"><img src = {logo}/><Badge color="danger">Beta</Badge></Col>
+                <Col className="center"><img src = {logo} alt = "Chirping Canary Logo"/><Badge color="danger">Beta</Badge></Col>
                 <Col className="flex-xs-middle">
                     <h1 className="header-font">
                         <br></br>
