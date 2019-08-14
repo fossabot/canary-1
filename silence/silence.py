@@ -16,6 +16,8 @@ globals = {}
 # Set the directory the the air pollution file
 globals['air_pollution_file'] = "./data/air-pollution-data.csv"
 globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
+
+# Set the available air pollution levels and appropriate messages
 globals['levels'] = ['green', 'yellow', 'amber', 'red']
 globals['messages'] = {
     'green': 'There is no need to take any additional precautions.',
@@ -36,7 +38,7 @@ twilio_client = Client(
 # Import the data
 def import_data(file_path, retry_time):
     """
-    This function imports the data.
+    This function imports data from a CSV file.
 
     param (str) file_path: The path to the data csv file
     param (int) retry_time: The time to wait in seconds before re-trying if
@@ -63,11 +65,11 @@ def import_data(file_path, retry_time):
     # Return the air pollution data
     return data
 
-def process_air_pollution_data(air_pollution_data):
 
+def process_air_pollution_data(air_pollution_data):
     """
     This function processes the air pollution data to produce an hourly average
-    pollution level
+    pollution level.
 
     param (Pandas DataFrame) air_pollution_data: The dataframe containing the
     latest air pollution data
@@ -98,38 +100,29 @@ def send_notifications(topic, level, subscriber_df, client):
     This function sends a topic (alert level) and the current pollution level
     to the relevant subscribers.
 
-    param (str) topic: The current alert level
-    param (str) level: The current pollution level
+    param (str) topic: The current alert level (e.g. green, red, ambert etc.)
+    param (str) level: The current air quality index pollution level (e.g. 156)
     param (Pandas DataFrame) subscriber_df: The subscriber information
-    param (str) account_sid: The twilio account id
-    param (str) auth_token: The twilio authorisation token
+    param (Twilio Client) client: The twilio client to use
 
     return (list [str]) message_ids: The ids of the messages that were sent
     """
 
-    """
-    # Send a WhatsApp message
-    message = client.messages.create(
-        from_='whatsapp:+14155238886',
-        body='Your appointment is coming up on {} at {}'.format(topic, topic),
-        to='whatsapp:+447719143007'
-    )
-
-    # Print tbe message id
-    print(message.sid)
-    """
-
+    # Initialise a list to hold the message ids
     message_ids = []
 
+    # Construct the message body from the current
     message_body = 'The air pollution is currently at {} levels, the current index level is {}. {}'.format(
         topic, level, globals['messages'][topic])
 
+    # Get the current topic level as an integer for ordinal comparison
     current_topic_level = globals['levels'].index(topic)
-
+    # Get the subscription topics for all subscribers as an integer also
     subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: globals['levels'].index(x))
-
+    # Identify the relevant subscribers who have a notification level less than or equal to the current level
     relevant_subscribers = subscriber_df[current_topic_level >= subscriber_df['topic_level']]
 
+    # For each subscriber send a notification
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
         try:
@@ -139,17 +132,19 @@ def send_notifications(topic, level, subscriber_df, client):
                 to=subscriber_phone
             )
 
-            # Print the message id
+            # Append the message id
             message_ids.append(message.sid)
         except:
+            # Pass in the case of an error for now
             pass
 
     return message_ids
 
 # Continuously run the code below
 while True:
-    # Import the latest pollution data with a 60 second retry time
+    # Import the latest pollution data with a 60 second retry time, this is populated by the feathers application
     air_pollution_data = import_data(globals['air_pollution_file'], 60)
+    # Import the latest subscriber data with a 60 second rety time, also populated by the feathers application
     subscriber_data = import_data(globals['subscriber_file'], 60)
     # Get the average pollution levels per hour
     average_per_timestamp = process_air_pollution_data(air_pollution_data)
@@ -164,7 +159,7 @@ while True:
         level=current_level,
         subscriber_df=subscriber_data,
         client=twilio_client)
-
+    # Print the ids of the messages sent
     print (messages)
     # Wait an hour before running through the cycle again
     time.sleep(3600)
