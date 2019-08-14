@@ -115,7 +115,7 @@ def fetch_data_view(s3, bucket, file_path, output_path, retry_time):
             else:
                 raise
 
-
+# Every 60 minutes run a new query and get new data for air pollution and subscribers
 while True:
     output_bucket, output_file_path = generate_data_view(
         client=globals['athena'],
