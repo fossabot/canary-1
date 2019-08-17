@@ -18,9 +18,9 @@ globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
 # Maps the levels to the subscribers input for sending messages
 globals['levels'] = {
     "green": "hourly",
-    "yellow": "highly sensitive",
-    "amber": "moderately sensitive",
-    "red": "no known sensitivity"
+    "yellow": "moderate concern for sensitive groups",
+    "amber": "unhealthy for sensitive groups",
+    "red": "unhealthy for everyone"
 }
 # Temporay storage for the verification codes
 globals['verification_codes'] = {}
@@ -442,7 +442,7 @@ def unsubscribe_user():
     resp = jsonify(success=True)
     resp.status_code = 200
     return resp
-    
+
 
 # API POST route for confirming a subscription
 @app.route("/subscribe/verify", methods=['POST'])
