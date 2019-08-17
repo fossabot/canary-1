@@ -16,10 +16,9 @@ function Home(props) {
                 <Label for="topic" sm={2}>Alert level</Label>
                 <Col sm={6}>
                     <Input type="select" name="topic" id="topic">
-                        <option value="green">Hourly alerts</option>
-                        <option value="yellow">Highly sensitive</option>
-                        <option value="amber">Moderately sensitive</option>
-                        <option value="red">No known sensitivity</option>
+                        <option value="yellow">Moderate Concern for Sensitive Groups</option>
+                        <option value="amber">Unhealthy for Sensitive Groups</option>
+                        <option value="red">Unhealthy for Everyone</option>
                     </Input>
                 </Col>
             </FormGroup>
