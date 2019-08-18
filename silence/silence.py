@@ -24,6 +24,7 @@ globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
 
 # Set the available air pollution levels and appropriate messages
 globals['levels'] = ['green', 'yellow', 'amber', 'red']
+
 globals['messages'] = {
     'green': 'There is no need to take any additional precautions.',
     'yellow': 'Avoid strenuous outdoor activity where possible and take precautions to avoid prolonged outdoor exposure.',
@@ -131,7 +132,7 @@ def send_notifications(topic, level, subscriber_df, client):
     param (Pandas DataFrame) subscriber_df: The subscriber information
     param (Twilio Client) client: The twilio client to use
 
-    return (list [str]) message_ids: The ids of the messages that were sent
+    return (list [dict]) message_logs: The details of each message which was sent
     """
 
     # Initialise a list to hold the message logs
@@ -151,17 +152,21 @@ def send_notifications(topic, level, subscriber_df, client):
     # For each subscriber send a notification
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
+
         try:
+            # Create the details of the current message
             current_message = {}
             current_message['topic'] = topic
             current_message['level'] = level
             current_message['topic_level'] = current_topic_level
 
+            # Create the current message in Twilio and send it
             message = client.messages.create(
                 from_='+442033225373',
                 body=message_body,
                 to=subscriber_phone)
 
+            # Update the details of the current message from the call to Twilio
             current_message_extra = vars(message)['_properties']
             current_message_extra['subresource_uris.media'] = current_message_extra['subresource_uris']['media']
             current_message_extra['to'] = hash_phone_number(current_message_extra['to'].replace('+44', '0'))
@@ -170,6 +175,7 @@ def send_notifications(topic, level, subscriber_df, client):
             del current_message_extra['subresource_uris']
             current_message.update(current_message_extra)
 
+            # Append the message to the message logs
             message_logs.append(current_message)
 
         except:
@@ -195,7 +201,18 @@ def hash_phone_number(phone_number):
 
 
 def log_notifications_sent(s3, bucket_name, message_logs):
+    """
+    This function logs messages that have been sent by saving the details
+    of each message to a bucket in S3.
 
+    param: (boto3.resource) s3: The boto3 S3 resource to use for interacting
+    with Amazon S3
+    param: (str) bucket_name: The bucket name in S3 to store the user information
+    param: (list[dict]) message_logs: The logs of the messages which have been created
+    and sent
+
+    returns: (list[str]) message_ids: The sid of each message logged to S3
+    """
     message_ids = []
 
     for message in message_logs:
