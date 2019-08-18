@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import math
 import boto3
+import hashlib
 import botocore
 import os
 import json
@@ -153,29 +154,34 @@ def send_notifications(topic, level, subscriber_df, client):
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
 
-        # Create the details of the current message
-        current_message = {}
-        current_message['topic'] = topic
-        current_message['level'] = level
-        current_message['topic_level'] = current_topic_level
+        try:
+            # Create the details of the current message
+            current_message = {}
+            current_message['topic'] = topic
+            current_message['level'] = level
+            current_message['topic_level'] = current_topic_level
 
-        # Create the current message in Twilio and send it
-        message = client.messages.create(
-            from_='+442033225373',
-            body=message_body,
-            to=subscriber_phone)
+            # Create the current message in Twilio and send it
+            message = client.messages.create(
+                from_='+442033225373',
+                body=message_body,
+                to=subscriber_phone)
 
-        # Update the details of the current message from the call to Twilio
-        current_message_extra = vars(message)['_properties']
-        current_message_extra['subresource_uris.media'] = current_message_extra['subresource_uris']['media']
-        current_message_extra['to'] = hash_phone_number(current_message_extra['to'].replace('+44', '0'))
-        current_message_extra['date_created'] = current_message_extra['date_created'].replace(tzinfo=None)
-        current_message_extra['date_updated'] = current_message_extra['date_updated'].replace(tzinfo=None)
-        del current_message_extra['subresource_uris']
-        current_message.update(current_message_extra)
+            # Update the details of the current message from the call to Twilio
+            current_message_extra = vars(message)['_properties']
+            current_message_extra['subresource_uris.media'] = current_message_extra['subresource_uris']['media']
+            current_message_extra['to'] = hash_phone_number(current_message_extra['to'].replace('+44', '0'))
+            current_message_extra['date_created'] = current_message_extra['date_created'].replace(tzinfo=None)
+            current_message_extra['date_updated'] = current_message_extra['date_updated'].replace(tzinfo=None)
+            del current_message_extra['subresource_uris']
+            current_message.update(current_message_extra)
 
-        # Append the message to the message logs
-        message_logs.append(current_message)
+            # Append the message to the message logs
+            message_logs.append(current_message)
+
+        except:
+            # Pass in the case of an error for now
+            pass
 
     return message_logs
 
@@ -214,10 +220,13 @@ def log_notifications_sent(s3, bucket_name, message_logs):
 
         serialised_message = json.dumps(message, default=str)
 
-        s3.Object(bucket_name, 'message-{}.json'.format(
-            message['sid'])).put(Body=serialised_message)
+        try:
+            s3.Object(bucket_name, 'message-{}.json'.format(
+                message['sid'])).put(Body=serialised_message)
 
-        message_ids.append(message['sid'])
+            message_ids.append(message['sid'])
+        except:
+            pass
 
     return message_ids
 
