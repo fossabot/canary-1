@@ -2,8 +2,12 @@ import time
 import pandas as pd
 import requests
 import math
+import boto3
+import botocore
 import os
+import json
 from twilio.rest import Client
+
 
 """
 This file handles generating appropriate notifications from the latest air
@@ -13,6 +17,7 @@ pollution data
 # Initialise a list to hold the global variables
 globals = {}
 
+globals['bucket_name'] = "airpollutionnotificationlogs"
 # Set the directory the the air pollution file
 globals['air_pollution_file'] = "./data/air-pollution-data.csv"
 globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
@@ -34,6 +39,27 @@ globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
 twilio_client = Client(
     globals['twilio_account_sid'],
     globals['twilio_auth_token'])
+
+
+# Pass in the access credentials via environment variables
+AWS_SERVER_PUBLIC_KEY = os.getenv("AWS_SERVER_PUBLIC_KEY", None)
+AWS_SERVER_SECRET_KEY = os.getenv("AWS_SERVER_SECRET_KEY", None)
+
+# Check if the environment variables exist, they are only required for external access
+if AWS_SERVER_PUBLIC_KEY is not None and AWS_SERVER_SECRET_KEY is not None:
+
+    session = boto3.Session(
+        aws_access_key_id=AWS_SERVER_PUBLIC_KEY,
+        aws_secret_access_key=AWS_SERVER_SECRET_KEY,
+        region_name='eu-west-2'
+    )
+
+    globals['s3'] = session.resource('s3')
+
+# If no environment variables rely on a AWS role instead
+else:
+    globals['s3'] = boto3.resource('s3')
+
 
 # Import the data
 def import_data(file_path, retry_time):
@@ -108,8 +134,8 @@ def send_notifications(topic, level, subscriber_df, client):
     return (list [str]) message_ids: The ids of the messages that were sent
     """
 
-    # Initialise a list to hold the message ids
-    message_ids = []
+    # Initialise a list to hold the message logs
+    message_logs = []
 
     # Construct the message body from the current
     message_body = 'The air pollution is currently at {} levels, the current index level is {}. {}'.format(
@@ -126,19 +152,66 @@ def send_notifications(topic, level, subscriber_df, client):
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
         try:
+            current_message = {}
+            current_message['topic'] = topic
+            current_message['level'] = level
+            current_message['topic_level'] = current_topic_level
+
             message = client.messages.create(
                 from_='+442033225373',
                 body=message_body,
-                to=subscriber_phone
-            )
+                to=subscriber_phone)
 
-            # Append the message id
-            message_ids.append(message.sid)
+            current_message_extra = vars(message)['_properties']
+            current_message_extra['subresource_uris.media'] = current_message_extra['subresource_uris']['media']
+            current_message_extra['to'] = hash_phone_number(current_message_extra['to'].replace('+44', '0'))
+            current_message_extra['date_created'] = current_message_extra['date_created'].replace(tzinfo=None)
+            current_message_extra['date_updated'] = current_message_extra['date_updated'].replace(tzinfo=None)
+            del current_message_extra['subresource_uris']
+            current_message.update(current_message_extra)
+
+            message_logs.append(current_message)
+
         except:
             # Pass in the case of an error for now
             pass
 
+    return message_logs
+
+
+def hash_phone_number(phone_number):
+    """
+    This function creates an md5 hash of a phone number
+
+    param: (str) phone_number: The phone number to create an MD5 hash of
+
+    returns: (str) phone_hash: The MD5 hash of the phone number
+    """
+
+    # Create a hash from the phone number
+    phone_hash = hashlib.md5(phone_number.encode('utf-8')).hexdigest()
+
+    return phone_hash
+
+
+def log_notifications_sent(s3, bucket_name, message_logs):
+
+    message_ids = []
+
+    for message in message_logs:
+
+        serialised_message = json.dumps(message, default=str)
+
+        try:
+            s3.Object(bucket_name, 'message-{}.json'.format(
+                message['sid'])).put(Body=serialised_message)
+
+            message_ids.append(message['sid'])
+        except:
+            pass
+
     return message_ids
+
 
 # Continuously run the code below
 while True:
@@ -159,7 +232,14 @@ while True:
         level=current_level,
         subscriber_df=subscriber_data,
         client=twilio_client)
+    # Save the messages to logs
+    message_ids = log_notifications_sent(
+        s3=globals['s3'],
+        bucket_name=globals['bucket_name'],
+        message_logs=messages
+    )
     # Print the ids of the messages sent
-    print (messages)
+    print ('Messages succesfully sent')
+    print (message_ids)
     # Wait an hour before running through the cycle again
     time.sleep(3600)

@@ -32,6 +32,16 @@ spec:
                 secretKeyRef:
                   name: twilio
                   key: AUTH_TOKEN
+            - name: AWS_SERVER_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws.s3.writelogs
+                  key: SERVER_PUBLIC_KEY
+            - name: AWS_SERVER_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws.s3.writelogs
+                  key: SERVER_SECRET_KEY
         - name: feathers
           image: mikemcgarry/canary-feathers
           volumeMounts:
