@@ -451,7 +451,7 @@ def confirm_subscription():
     This function subscribes a user to the appropriate topic
     """
 
-    parameters = ["phone", "code"]
+    parameters = ["phone", "code", "opt-in"]
     request_params= get_details_from_request(request.form, parameters)
 
     if request_params["status_code"] != 200:
@@ -461,6 +461,7 @@ def confirm_subscription():
 
     phone = request_params["phone"]
     code = request_params["code"]
+    opt_in = request_params["opt-in"]
 
     phone_hash = hash_phone_number(phone)
 

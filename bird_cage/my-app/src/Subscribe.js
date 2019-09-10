@@ -22,8 +22,14 @@ function Home(props) {
                     </Input>
                 </Col>
             </FormGroup>
+            <FormGroup row>
+                <Col sm={12}>
+                    <Input type="checkbox" name="opt-in" id="opt-in" align='right'/>
+                    Yes, I would like Chirping Canary to send me marketing communications by SMS (text message)
+                </Col>
+            </FormGroup>
             <Col sm={6}>
-            <Button color="danger" align='right'>Subscribe</Button>
+            <Button color="danger" align='left'>Subscribe</Button>
             </Col>
         </Form>
     </Col>
@@ -134,7 +140,8 @@ class Subscribe extends Component {
     this.state = {
       flow: 'home',
       phone: '',
-      currentError: ''
+      currentError: '',
+      optIn: 'off'
     };
   };
 
@@ -151,6 +158,10 @@ class Subscribe extends Component {
       if (response.status === 200) {
         this.setState({phone: data.get('phone')})
         this.setState({flow: "confirm_subscription"})
+        let optInState = Object.values(data).indexOf("opt-in")
+        if (optInState > -1) {
+            this.setState({optIn: "on"})
+        };
         this.setState({currentError: ''})
       } else {
         response.json()
@@ -211,6 +222,7 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
     data.append('phone', this.state.phone);
+    data.append('opt-in', this.state.optIn);
 
     fetch('/api/subscribe/verify', {
       method: 'POST',
