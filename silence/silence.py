@@ -185,6 +185,10 @@ def send_notifications(topic, level, subscriber_df, client):
     # Initialise a list to hold the message logs
     message_logs = []
 
+    # Check that there are subscribers
+    if len(subscriber_df) == 0:
+        return message_logs
+
     # Construct the message body from the current
     message_body = 'The air pollution is currently at {} levels, the current index level is {}. {}'.format(
         topic, level, globals['messages'][topic])
