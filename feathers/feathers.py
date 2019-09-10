@@ -135,7 +135,19 @@ while True:
         client=globals['athena'],
         results_bucket=globals['subscribers_bucket'],
         database_name=globals['database'],
-        sql_query="SELECT * from subscribers",
+        sql_query="""
+        SELECT max(date_created) as last_message, phone, a.topic from 
+        (
+          SELECT lower(to_hex(md5(to_utf8(phone)))) as phone_hash, phone, subscribers.topic 
+          FROM subscribers
+        ) AS a 
+        
+        LEFT JOIN notificationlogs 
+        
+        ON a.phone_hash = notificationlogs.to 
+        
+        GROUP BY a.phone_hash, a.phone, a.topic
+        """,
         retry_time=60)
 
     fetch_data_view(

@@ -5,6 +5,8 @@ import math
 import boto3
 import hashlib
 import botocore
+from datetime import datetime
+import pytz
 import os
 import json
 from twilio.rest import Client
@@ -32,6 +34,9 @@ globals['messages'] = {
     'amber': 'Avoid all strenuous outdoor activity and limit outdoor exposure.',
     'red': 'Avoid all outdoor activity. Consider staying home.'
 }
+
+globals['start_hour'] = 7
+globals['end_hour'] = 21
 
 # Get the Twilio account id and authorisation token
 globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
@@ -121,6 +126,47 @@ def process_air_pollution_data(air_pollution_data):
     }).sort_index(ascending=False)
 
     return average_per_timestamp
+
+
+def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour):
+    """
+    This function checks when a user was last messaged to ensure that they are eligible to receive a notifictation.
+    This prevents sending messages to frequently
+
+    param (Pandas DataFrame) subscriber_df_with_last_message: The subscriber information including when they last
+    received a message
+    param (int) start_hour: The hour to start sending notifications from e.g. 8 would be 8am in the morning
+    param (int) end_hour: The hour to stop sending notifications over e.g. 20 would be 10pm at night
+
+    return (Pandas DataFrame) subscriber_data_eligible: The subscriber information
+    """
+
+    # Convert the last message time to a datetime
+    subscriber_df_with_last_message['last_message'] = pd.to_datetime(
+        subscriber_df_with_last_message['last_message'], yearfirst=True, utc=True)
+
+    # Extract the day (that is the year, month, day combination) of the last message
+    subscriber_df_with_last_message['day'] = subscriber_df_with_last_message['last_message'].apply(
+        lambda x: x.strftime('%Y-%m-%d'))
+
+    # Get the current time including the current day as above and the current hour
+    current_time = datetime.now(pytz.UTC)
+    day = current_time.strftime('%Y-%m-%d')
+    hour = int(current_time.strftime('%H'))
+
+    # If outside notification hours don't send a message and return an empty dataframe
+    if hour < start_hour or hour > end_hour:
+        return pd.DataFrame(columns=['phone', 'topic'])
+
+    # If a message has already been sent today don't send another
+    ineligible_subscribers = subscriber_df_with_last_message.index[
+        subscriber_df_with_last_message['day'] == day].tolist()
+
+    # Drop the ineligible subscribers
+    subscriber_df_with_last_message[ineligible_subscribers].drop(inplace=True)
+
+    return subscriber_data_eligible
+
 
 
 def send_notifications(topic, level, subscriber_df, client):
@@ -237,6 +283,11 @@ while True:
     air_pollution_data = import_data(globals['air_pollution_file'], 60)
     # Import the latest subscriber data with a 60 second rety time, also populated by the feathers application
     subscriber_data = import_data(globals['subscriber_file'], 60)
+    # Check which users are eligible for a notification based on past activity
+    subscriber_data_eligible = check_eligibility(
+        subscriber_df_with_last_message=subscriber_data,
+        start_hour=globals['start_hour'],
+        end_hour=globals['end_hour'])
     # Get the average pollution levels per hour
     average_per_timestamp = process_air_pollution_data(air_pollution_data)
     # Get the current pollution level
@@ -248,7 +299,7 @@ while True:
     messages = send_notifications(
         topic=globals['levels'][level_category],
         level=current_level,
-        subscriber_df=subscriber_data,
+        subscriber_df=subscriber_data_eligible,
         client=twilio_client)
     # Save the messages to logs
     message_ids = log_notifications_sent(
