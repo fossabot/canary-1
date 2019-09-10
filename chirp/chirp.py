@@ -452,7 +452,7 @@ def confirm_subscription():
     """
 
     parameters = ["phone", "code", "opt-in"]
-    request_params= get_details_from_request(request.form, parameters)
+    request_params = get_details_from_request(request.form, parameters)
 
     if request_params["status_code"] != 200:
         resp = jsonify(success=False, message="The parameters were incorrect")
@@ -461,7 +461,10 @@ def confirm_subscription():
 
     phone = request_params["phone"]
     code = request_params["code"]
-    opt_in = request_params["opt-in"]
+    opt_in = "False"
+
+    if request_params["opt-in"] == "on":
+        opt_in = "True"
 
     phone_hash = hash_phone_number(phone)
 
@@ -480,7 +483,8 @@ def confirm_subscription():
 
     save_user_payload = {
         "phone": phone,
-        "topic": level
+        "topic": level,
+        "opt-in": opt_in
     }
 
     save_status = save_user_to_s3(
