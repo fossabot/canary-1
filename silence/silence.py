@@ -163,7 +163,7 @@ def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour):
         subscriber_df_with_last_message['day'] == day].tolist()
 
     # Drop the ineligible subscribers
-    subscriber_df_with_last_message[ineligible_subscribers].drop(inplace=True)
+    subscriber_df_with_last_message.drop(inplace=True, index=ineligible_subscribers)
 
     return subscriber_data_eligible
 
