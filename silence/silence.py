@@ -164,6 +164,7 @@ def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour):
 
     # Drop the ineligible subscribers
     subscriber_df_with_last_message.drop(inplace=True, index=ineligible_subscribers)
+    subscriber_data_eligible = subscriber_df_with_last_message.loc[: ,['phone', 'topic']]
 
     return subscriber_data_eligible
 
