@@ -150,6 +150,10 @@ class Subscribe extends Component {
     event.preventDefault();
     const data = new FormData(event.target);
 
+    if (data.has("opt-in")) {
+      this.setState({optIn: "on"});
+    };
+
     fetch('/api/subscribe', {
       method: 'POST',
       body: data,
