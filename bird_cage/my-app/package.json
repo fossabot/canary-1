@@ -9,7 +9,8 @@
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
     "react-scripts": "^3.0.0",
-    "reactstrap": "^8.0.0"
+    "reactstrap": "^8.0.0",
+    "react-cookie-consent": "^2.5.0"
   },
   "scripts": {
     "start": "react-scripts start",
