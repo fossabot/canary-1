@@ -24,17 +24,14 @@ before_install:
 script:
   -  |
 
-      if [ "$TRAVIS_BRANCH" = "master" ]; then
-        namespace="canary"
-      elif [ "$TRAVIS_BRANCH" = "develop" ]; then
-        namespace="canary-ci"
-      fi
-
       docker run mikemcgarry/canary-bird_cage-test npm test -- --coverage
 
 deploy:
-  provider: script
-  script: bash ./deploy.sh ${!namespace}
-  on:
-    all_branches: true
-    condition: $TRAVIS_BRANCH =~ ^(master|develop)$
+  - provider: script
+    script: bash ./deploy.sh canary
+    on:
+      branch: master
+  - provider: script
+    script: bash ./deploy.sh canary-ci
+    on:
+      branch: develop

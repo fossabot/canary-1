@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+if [ "$1" = "canary" ] || [ "$1" = "canary-ci" ]; then
+    echo "Deploying to the $1 namespace"
+else
+    echo "Error! Namespace not recognised. Must be one of 'canary' or 'canary-ci'"
+    exit 125
+fi
+
 docker build -t mikemcgarry/canary-bird_cage:latest -t mikemcgarry/canary-bird_cage:$SHA ./bird_cage
 docker build -t mikemcgarry/canary-chirp:latest -t mikemcgarry/canary-chirp:$SHA ./chirp
 docker build -t mikemcgarry/canary-feathers:latest -t mikemcgarry/canary-feathers:$SHA ./feathers
