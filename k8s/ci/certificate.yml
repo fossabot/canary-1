@@ -1,13 +1,13 @@
 apiVersion: certmanager.k8s.io/v1alpha1
 kind: Certificate
 metadata:
-  name: ci.chirpingcanary-co-uk-tls
+  name: ci-chirpingcanary-co-uk-tls
 spec:
   secretName: ci-chirpingcanary-co-uk
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-  commonName: ci.chirpingcanary.co.uk
+  commonName: ci-chirpingcanary.co.uk
   dnsNames:
     - ci.chirpingcanary.co.uk
     - www.ci.chirpingcanary.co.uk
