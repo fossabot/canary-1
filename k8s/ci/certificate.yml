@@ -7,7 +7,7 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-  commonName: ci-chirpingcanary.co.uk
+  commonName: ci.chirpingcanary.co.uk
   dnsNames:
     - ci.chirpingcanary.co.uk
     - www.ci.chirpingcanary.co.uk
