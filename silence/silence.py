@@ -20,7 +20,7 @@ pollution data
 # Initialise a list to hold the global variables
 globals = {}
 
-globals['bucket_name'] = "airpollutionnotificationlogs"
+globals['bucket_name'] = os.getenv("NOTIFICATION_LOGS_S3_BUCKET_NAME", None)
 # Set the directory the the air pollution file
 globals['air_pollution_file'] = "./data/air-pollution-data.csv"
 globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"

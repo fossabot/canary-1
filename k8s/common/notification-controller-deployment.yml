@@ -42,6 +42,11 @@ spec:
                 secretKeyRef:
                   name: aws.s3.writelogs
                   key: SERVER_SECRET_KEY
+            - name: NOTIFICATION_LOGS_S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: aws.bucketnames
+                  key: NOTIFICATION_LOGS
         - name: feathers
           image: mikemcgarry/canary-feathers
           volumeMounts:
@@ -58,6 +63,23 @@ spec:
                 secretKeyRef:
                   name: aws.athena
                   key: SERVER_SECRET_KEY
+            - name: SUBSCRIBERS_QUERY_RESULTS_S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: aws.bucketnames
+                  key: SUBSCRIBERS_QUERY_RESULTS
+            - name: POLLUTION_QUERY_RESULTS_S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: aws.bucketnames
+                  key: POLLUTION_QUERY_RESULTS
+            - name: POLLUTION_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: aws.databasenames
+                  key: AIR_POLLUTION_LONDON
+
+
       volumes:
         - name: data
           emptyDir: {}

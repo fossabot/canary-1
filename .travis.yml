@@ -1,4 +1,4 @@
-sudo: required
+ sudo: required
 
 services:
   - docker
@@ -21,10 +21,19 @@ before_install:
   - docker build -t mikemcgarry/canary-bird_cage-test -f ./bird_cage/Dockerfile.dev ./bird_cage
 
 script:
-  - docker run mikemcgarry/canary-bird_cage-test npm test -- --coverage
+  -  |
+
+      if [ "$TRAVIS_BRANCH" = "master" ]; then
+        namespace="canary"
+      elif [ "$TRAVIS_BRANCH" = "develop" ]; then
+        namespace="canary-ci"
+      fi
+
+      docker run mikemcgarry/canary-bird_cage-test npm test -- --coverage
 
 deploy:
   provider: script
-  script: bash ./deploy.sh
+  script: bash ./deploy.sh ${!namespace}
   on:
-    branch: master
+    all_branches: true
+    condition: $TRAVIS_BRANCH =~ ^(master|develop)$

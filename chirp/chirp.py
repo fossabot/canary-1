@@ -11,7 +11,7 @@ import pytz
 
 globals = {}
 # Amazon Web Services bucket name to hold the subsciber information
-globals['bucket_name'] = "airpollutionsubscribers"
+globals['bucket_name'] = os.getenv("SUBSCRIBERS_S3_BUCKET_NAME", None)
 # Get the Twilio account id and authorisation token
 globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
 globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)

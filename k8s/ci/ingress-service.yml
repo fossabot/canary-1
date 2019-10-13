@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    kubernetes.io/ingress.global-static-ip-name: "ci-canary-ingress"
+    certmanager.k8s.io/cluster-issuer: 'letsencrypt-prod'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+spec:
+  tls:
+    - hosts:
+        - ci.chirpingcanary.co.uk
+        - www.ci.chirpingcanary.co.uk
+      secretName: ci-chirpingcanary-co-uk
+  rules:
+    - host: ci.chirpingcanary.co.uk
+      http:
+        paths:
+          - path: /(.*)
+            backend:
+              serviceName: view-clusterip-service
+              servicePort: 3000
+          - path: /api/(.*)
+            backend:
+              serviceName: subscription-controller-clusterip-service
+              servicePort: 5000
+    - host: www.ci.chirpingcanary.co.uk
+      http:
+        paths:
+          - path: /(.*)
+            backend:
+              serviceName: view-clusterip-service
+              servicePort: 3000
+          - path: /api/(.*)
+            backend:
+              serviceName: subscription-controller-clusterip-service
+              servicePort: 5000

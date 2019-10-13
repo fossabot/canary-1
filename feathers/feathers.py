@@ -7,13 +7,13 @@ import uuid
 # Initialise and set the global variables
 globals = {}
 # Pollution data details
-globals['pollution_bucket'] = "airpollutionlondon-queryresults"
+globals['pollution_bucket'] = os.getenv("POLLUTION_QUERY_RESULTS_S3_BUCKET_NAME", None)
 globals['pollution_output_name'] = "data/air-pollution-data.csv"
 # Subscriber details
-globals['subscribers_bucket'] = "airpollutionsubscribers-queryresults"
+globals['subscribers_bucket'] = os.getenv("SUBSCRIBERS_QUERY_RESULTS_S3_BUCKET_NAME", None)
 globals['subscribers_output_name'] = "data/air-pollution-subscribers.csv"
 # Database for both
-globals['database'] = 'airpollutionlondon'
+globals['database'] = os.getenv("POLLUTION_DATABASE_NAME", None)
 
 # Pass in the access credentials via environment variables
 globals["AWS_SERVER_PUBLIC_KEY"] = os.getenv("AWS_SERVER_PUBLIC_KEY", None)

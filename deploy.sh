@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 docker build -t mikemcgarry/canary-bird_cage:latest -t mikemcgarry/canary-bird_cage:$SHA ./bird_cage
 docker build -t mikemcgarry/canary-chirp:latest -t mikemcgarry/canary-chirp:$SHA ./chirp
 docker build -t mikemcgarry/canary-feathers:latest -t mikemcgarry/canary-feathers:$SHA ./feathers
@@ -12,9 +14,15 @@ docker push mikemcgarry/canary-feathers:$SHA
 docker push mikemcgarry/canary-silence:latest
 docker push mikemcgarry/canary-silence:$SHA
 
-kubectl apply -n canary -f k8s
+kubectl apply -n "$1" -f k8s/common
 
-kubectl set image -n canary deployment/notification-controller-deployment silence=mikemcgarry/canary-silence:$SHA
-kubectl set image -n canary deployment/notification-controller-deployment feathers=mikemcgarry/canary-feathers:$SHA
-kubectl set image -n canary deployment/subscription-controller-deployment chirp=mikemcgarry/canary-chirp:$SHA
-kubectl set image -n canary deployment/view-deployment bird-cage=mikemcgarry/canary-bird_cage:$SHA
+if [ "$1" = "canary" ]; then
+    kubectl apply -n "$1" -f k8s/prod
+elif [ "$1" = "canary-ci" ]; then
+    kubectl apply -n "$1" -f k8s/ci
+fi
+
+kubectl set image -n "$1" deployment/notification-controller-deployment silence=mikemcgarry/canary-silence:$SHA
+kubectl set image -n "$1" deployment/notification-controller-deployment feathers=mikemcgarry/canary-feathers:$SHA
+kubectl set image -n "$1" deployment/subscription-controller-deployment chirp=mikemcgarry/canary-chirp:$SHA
+kubectl set image -n "$1" deployment/view-deployment bird-cage=mikemcgarry/canary-bird_cage:$SHA

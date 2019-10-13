@@ -41,3 +41,8 @@ spec:
                 secretKeyRef:
                   name: twilio
                   key: AUTH_TOKEN
+            - name: SUBSCRIBERS_S3_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: aws.bucketnames
+                  key: SUBSCRIBERS
