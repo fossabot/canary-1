@@ -32,12 +32,12 @@ spec:
                 secretKeyRef:
                   name: twilio
                   key: AUTH_TOKEN
-            - name: AWS_SERVER_PUBLIC_KEY
+            - name: AWS_SERVER_PUBLIC_KEY_LOGS
               valueFrom:
                 secretKeyRef:
                   name: aws.s3.writelogs
                   key: SERVER_PUBLIC_KEY
-            - name: AWS_SERVER_SECRET_KEY
+            - name: AWS_SERVER_SECRET_KEY_LOGS
               valueFrom:
                 secretKeyRef:
                   name: aws.s3.writelogs
@@ -47,18 +47,12 @@ spec:
                 secretKeyRef:
                   name: aws.bucketnames
                   key: NOTIFICATION_LOGS
-        - name: feathers
-          image: mikemcgarry/canary-feathers
-          volumeMounts:
-            - name: data
-              mountPath: /tmp/feathers/data
-          env:
-            - name: AWS_SERVER_PUBLIC_KEY
+            - name: AWS_SERVER_PUBLIC_KEY_ATHENA
               valueFrom:
                 secretKeyRef:
                   name: aws.athena
                   key: SERVER_PUBLIC_KEY
-            - name: AWS_SERVER_SECRET_KEY
+            - name: AWS_SERVER_SECRET_KEY_ATHENA
               valueFrom:
                 secretKeyRef:
                   name: aws.athena
@@ -78,8 +72,6 @@ spec:
                 secretKeyRef:
                   name: aws.databasenames
                   key: AIR_POLLUTION_LONDON
-
-
       volumes:
         - name: data
           emptyDir: {}

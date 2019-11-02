@@ -1,75 +1,12 @@
 import time
 import pandas as pd
-import requests
-import math
-import boto3
 import hashlib
-import botocore
 from datetime import datetime
 import pytz
-import os
 import json
-from twilio.rest import Client
 
 
-"""
-This file handles generating appropriate notifications from the latest air
-pollution data
-"""
-
-# Initialise a list to hold the global variables
-globals = {}
-
-globals['bucket_name'] = os.getenv("NOTIFICATION_LOGS_S3_BUCKET_NAME", None)
-# Set the directory the the air pollution file
-globals['air_pollution_file'] = "./data/air-pollution-data.csv"
-globals['subscriber_file'] = "./data/air-pollution-subscribers.csv"
-
-# Set the available air pollution levels and appropriate messages
-globals['levels'] = ['green', 'yellow', 'amber', 'red']
-
-globals['messages'] = {
-    'green': 'There is no need to take any additional precautions.',
-    'yellow': 'Avoid strenuous outdoor activity where possible and take precautions to avoid prolonged outdoor exposure.',
-    'amber': 'Avoid all strenuous outdoor activity and limit outdoor exposure.',
-    'red': 'Avoid all outdoor activity. Consider staying home.'
-}
-
-globals['start_hour'] = 7
-globals['end_hour'] = 21
-
-# Get the Twilio account id and authorisation token
-globals['twilio_account_sid'] = os.getenv("TWILIO_ACCOUNT_ID", None)
-globals['twilio_auth_token'] = os.getenv("TWILIO_AUTH_TOKEN", None)
-
-# Create the client
-twilio_client = Client(
-    globals['twilio_account_sid'],
-    globals['twilio_auth_token'])
-
-
-# Pass in the access credentials via environment variables
-AWS_SERVER_PUBLIC_KEY = os.getenv("AWS_SERVER_PUBLIC_KEY", None)
-AWS_SERVER_SECRET_KEY = os.getenv("AWS_SERVER_SECRET_KEY", None)
-
-# Check if the environment variables exist, they are only required for external access
-if AWS_SERVER_PUBLIC_KEY is not None and AWS_SERVER_SECRET_KEY is not None:
-
-    session = boto3.Session(
-        aws_access_key_id=AWS_SERVER_PUBLIC_KEY,
-        aws_secret_access_key=AWS_SERVER_SECRET_KEY,
-        region_name='eu-west-2'
-    )
-
-    globals['s3'] = session.resource('s3')
-
-# If no environment variables rely on a AWS role instead
-else:
-    globals['s3'] = boto3.resource('s3')
-
-
-# Import the data
-def import_data(file_path, retry_time):
+def import_data(file_path: str, retry_time: int):
     """
     This function imports data from a CSV file.
 
@@ -169,8 +106,7 @@ def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour):
     return subscriber_data_eligible
 
 
-
-def send_notifications(topic, level, subscriber_df, client):
+def send_notifications(topic, level, subscriber_df, client, messages, levels):
     """
     This function sends a topic (alert level) and the current pollution level
     to the relevant subscribers.
@@ -192,12 +128,12 @@ def send_notifications(topic, level, subscriber_df, client):
 
     # Construct the message body from the current
     message_body = 'The air pollution is currently at {} levels, the current index level is {}. {}'.format(
-        topic, level, globals['messages'][topic])
+        topic, level, messages[topic])
 
     # Get the current topic level as an integer for ordinal comparison
-    current_topic_level = globals['levels'].index(topic)
+    current_topic_level = levels.index(topic)
     # Get the subscription topics for all subscribers as an integer also
-    subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: globals['levels'].index(x))
+    subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: levels.index(x))
     # Identify the relevant subscribers who have a notification level less than or equal to the current level
     relevant_subscribers = subscriber_df[current_topic_level >= subscriber_df['topic_level']]
 
@@ -282,38 +218,4 @@ def log_notifications_sent(s3, bucket_name, message_logs):
     return message_ids
 
 
-# Continuously run the code below
-while True:
-    # Import the latest pollution data with a 60 second retry time, this is populated by the feathers application
-    air_pollution_data = import_data(globals['air_pollution_file'], 60)
-    # Import the latest subscriber data with a 60 second rety time, also populated by the feathers application
-    subscriber_data = import_data(globals['subscriber_file'], 60)
-    # Check which users are eligible for a notification based on past activity
-    subscriber_data_eligible = check_eligibility(
-        subscriber_df_with_last_message=subscriber_data,
-        start_hour=globals['start_hour'],
-        end_hour=globals['end_hour'])
-    # Get the average pollution levels per hour
-    average_per_timestamp = process_air_pollution_data(air_pollution_data)
-    # Get the current pollution level
-    current_level = round(average_per_timestamp.iloc[0]['air_quality_index (aqi)']['mean'], 2)
-    # Get the alert category
-    level_category = math.floor(current_level / 50)
-    print ('The current pollution level is {} which is at the {} level'.format(current_level, level_category))
-    # Send notifications to the relevant subscribers
-    messages = send_notifications(
-        topic=globals['levels'][level_category],
-        level=current_level,
-        subscriber_df=subscriber_data_eligible,
-        client=twilio_client)
-    # Save the messages to logs
-    message_ids = log_notifications_sent(
-        s3=globals['s3'],
-        bucket_name=globals['bucket_name'],
-        message_logs=messages
-    )
-    # Print the ids of the messages sent
-    print ('Messages succesfully sent')
-    print (message_ids)
-    # Wait an hour before running through the cycle again
-    time.sleep(3600)
+
