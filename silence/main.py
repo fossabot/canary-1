@@ -111,6 +111,8 @@ while True:
         file_path=global_config['subscribers_output_name'],
         retry_time=60)
 
+    utilities.delete_files([global_config['pollution_output_name'], global_config['subscribers_output_name']])
+
     # Check which users are eligible for a notification based on past activity
     subscriber_data_eligible = silence.check_eligibility(
         subscriber_df_with_last_message=subscriber_data,
@@ -143,8 +145,6 @@ while True:
     # Print the ids of the messages sent
     print ('Messages succesfully sent')
     print (message_ids)
-
-    utilities.delete_files([global_config['pollution_output_name'], global_config['subscribers_output_name']])
 
     # Wait an hour before running through the cycle again
     time.sleep(3600)
