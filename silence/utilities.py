@@ -37,7 +37,7 @@ def create_aws_client(client_type: str, public_key: str = None, secret_key: str 
 
     # If no environment variables rely on a AWS role instead
     else:
-        return getattr(boto3, client_mapping[client_type])(client_type)
+        return getattr(boto3, client_mapping[client_type])(service_name=client_type, region_name=region)
 
 
 def delete_files(file_paths: list) -> list:

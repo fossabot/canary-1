@@ -20,11 +20,13 @@ before_install:
   - gcloud container clusters get-credentials gym-hero-cluster
   - echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" --password-stdin
   - docker build -t mikemcgarry/canary-bird_cage-test -f ./bird_cage/Dockerfile.dev ./bird_cage
+  - docker build -t mikemcgarry/canary-silence-test -f ./silence/Dockerfile.dev ./silence
 
 script:
   -  |
 
-      docker run mikemcgarry/canary-bird_cage-test npm test -- --coverage
+      docker run -e CI=true mikemcgarry/canary-bird_cage-test npm test -- --coverage
+      docker run mikemcgarry/canary-silence-test
 
 deploy:
   - provider: script
