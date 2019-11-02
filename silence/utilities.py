@@ -1,4 +1,5 @@
 import boto3
+import os
 
 
 def create_aws_client(client_type: str, public_key: str = None, secret_key: str = None, region:
@@ -26,3 +27,9 @@ def create_aws_client(client_type: str, public_key: str = None, secret_key: str 
     # If no environment variables rely on a AWS role instead
     else:
         return boto3.resource(client_type)
+
+
+def delete_files(file_paths: list):
+
+    for file_path in file_paths:
+        os.remove(file_path)

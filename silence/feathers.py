@@ -81,4 +81,3 @@ def fetch_data_view(s3, bucket, file_path: str, output_path: str):
             else:
                 raise
 
-

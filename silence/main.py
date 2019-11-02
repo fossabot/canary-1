@@ -144,5 +144,7 @@ while True:
     print ('Messages succesfully sent')
     print (message_ids)
 
+    utilities.delete_files([global_config['pollution_output_name'], global_config['subscribers_output_name']])
+
     # Wait an hour before running through the cycle again
     time.sleep(3600)
