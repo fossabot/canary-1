@@ -72,6 +72,3 @@ spec:
                 secretKeyRef:
                   name: aws.databasenames
                   key: AIR_POLLUTION_LONDON
-      volumes:
-        - name: data
-          emptyDir: {}
