@@ -52,6 +52,9 @@ def generate_data_view(client, results_bucket: str, database_name: str, sql_quer
             output_bucket = output_file_details[2]
             break
 
+        elif query_state == "FAILED":
+            raise Exception(response)
+
         # If it has not succeeded try again after the retry time
         time.sleep(retry_time)
 
