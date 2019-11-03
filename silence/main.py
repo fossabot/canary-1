@@ -1,7 +1,7 @@
 import os
-import silence.utilities as utilities
-import silence.feathers as feathers
-import silence.quiet as quiet
+import utilities
+import feathers
+import quiet
 import math
 from twilio.rest import Client
 import time
