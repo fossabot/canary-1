@@ -1,7 +1,7 @@
 import os
 import silence.utilities as utilities
 import silence.feathers as feathers
-import silence.silence as silence
+import silence.quiet as quiet
 import math
 from twilio.rest import Client
 import time
@@ -102,25 +102,25 @@ while True:
         output_path=global_config['subscribers_output_name'])
 
     # Import the latest pollution data with a 60 second retry time, this is populated by the feathers application
-    air_pollution_data = silence.import_data(
+    air_pollution_data = quiet.import_data(
         file_path=global_config['pollution_output_name'],
         retry_time=60)
 
     # Import the latest subscriber data with a 60 second rety time, also populated by the feathers application
-    subscriber_data = silence.import_data(
+    subscriber_data = quiet.import_data(
         file_path=global_config['subscribers_output_name'],
         retry_time=60)
 
     utilities.delete_files([global_config['pollution_output_name'], global_config['subscribers_output_name']])
 
     # Check which users are eligible for a notification based on past activity
-    subscriber_data_eligible = silence.check_eligibility(
+    subscriber_data_eligible = quiet.check_eligibility(
         subscriber_df_with_last_message=subscriber_data,
         start_hour=global_config['start_hour'],
         end_hour=global_config['end_hour'])
 
     # Get the average pollution levels per hour
-    average_per_timestamp = silence.process_air_pollution_data(air_pollution_data)
+    average_per_timestamp = quiet.process_air_pollution_data(air_pollution_data)
 
     # Get the current pollution level & alert category
     current_level = round(average_per_timestamp.iloc[0]['air_quality_index (aqi)']['mean'], 2)
@@ -128,7 +128,7 @@ while True:
     print ('The current pollution level is {} which is at the {} level'.format(current_level, level_category))
 
     # Send notifications to the relevant subscribers
-    messages = silence.send_notifications(
+    messages = quiet.send_notifications(
         topic=global_config['levels'][level_category],
         level=current_level,
         subscriber_df=subscriber_data_eligible,
@@ -137,7 +137,7 @@ while True:
         levels=global_config['levels'])
 
     # Save the messages to logs
-    message_ids = silence.log_notifications_sent(
+    message_ids = quiet.log_notifications_sent(
         s3=global_config['s3_logs'],
         bucket_name=global_config['logs_bucket'],
         message_logs=messages)

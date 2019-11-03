@@ -19,4 +19,4 @@ ENV NOTIFICATION_LOGS_S3_BUCKET_NAME $SUBSCRIBERS_QUERY_RESULTS_S3_BUCKET_NAME
 
 COPY . .
 
-CMD ["python", "-u", "silence.py"]
+CMD ["python", "-u", "main.py"]
