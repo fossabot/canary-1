@@ -9,7 +9,7 @@ spec:
   selector:
     matchLabels:
       component: notification
-  # The pod configurationm same as in a Pod config file
+  # The pod configuration same as in a Pod config file
   template:
     metadata:
       labels:
@@ -18,9 +18,6 @@ spec:
       containers:
         - name: silence
           image: mikemcgarry/canary-silence
-          volumeMounts:
-            - name: data
-              mountPath: /tmp/silence/data
           env:
             - name: TWILIO_ACCOUNT_ID
               valueFrom:
