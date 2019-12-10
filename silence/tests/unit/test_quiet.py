@@ -161,7 +161,7 @@ class TestQuiet(unittest.TestCase):
             pd.DataFrame(columns=['phone', 'topic'])
         ]
     ])
-    def test_check_eligibilty(self, subscriber_df_with_last_message, start_hour, end_hour, expected_outcome) -> None:
+    def test_check_eligibility(self, subscriber_df_with_last_message, start_hour, end_hour, expected_outcome) -> None:
         """
         This tests that the eligibility check for message works as expected
         :param subscriber_df_with_last_message:

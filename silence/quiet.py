@@ -64,7 +64,7 @@ def process_air_pollution_data(air_pollution_data):
     return average_per_timestamp
 
 
-def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour, get_current_time_function):
+def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour, get_current_time_function=datetime.now):
     """
     This function checks when a user was last messaged to ensure that they are eligible to receive a notifictation.
     This prevents sending messages to frequently
