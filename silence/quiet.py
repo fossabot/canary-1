@@ -4,6 +4,7 @@ import hashlib
 from datetime import datetime
 import pytz
 import json
+import logging
 
 
 def import_data(file_path: str, retry_time: int):
@@ -78,6 +79,8 @@ def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour, get
     :return pd.DataFrame subscriber_data_eligible: The subscriber information
     """
 
+    logging.debug(f"There are {len(subscriber_df_with_last_message)} potentially eligible subscribers")
+
     # Convert the last message time to a datetime
     subscriber_df_with_last_message['last_message'] = pd.to_datetime(
         subscriber_df_with_last_message['last_message'], yearfirst=True, utc=True)
@@ -93,15 +96,20 @@ def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour, get
 
     # If outside notification hours don't send a message and return an empty dataframe
     if hour < start_hour or hour > end_hour:
+        logging.debug(f"Outside of notification window, no eligible subscribers")
         return pd.DataFrame(columns=['phone', 'topic'])
 
     # If a message has already been sent today don't send another
     ineligible_subscribers = subscriber_df_with_last_message.index[
         subscriber_df_with_last_message['day'] == day].tolist()
 
+    logging.debug(f"There are {len(ineligible_subscribers)} ineligible subscribers to remove")
+
     # Drop the ineligible subscribers
     subscriber_df_with_last_message.drop(inplace=True, index=ineligible_subscribers)
     subscriber_data_eligible = subscriber_df_with_last_message.loc[: ,['phone', 'topic']]
+
+    logging.debug(f"There are {len(subscriber_data_eligible)} eligible subscribers remaining")
 
     return subscriber_data_eligible
 
@@ -114,7 +122,7 @@ def send_notifications(topic, level, subscriber_df, client, messages, levels):
     :param str topic: The current alert level (e.g. green, red, ambert etc.)
     :param str level: The current air quality index pollution level (e.g. 156)
     :param pd.DataFrame subscriber_df: The subscriber information
-    :param Twilio.Client: The twilio client to use
+    :param Twilio.Client client: The twilio client to use
     :param dict messages: The text of the messages to send
     :param list[str] levels: The available levels
 
@@ -126,6 +134,7 @@ def send_notifications(topic, level, subscriber_df, client, messages, levels):
 
     # Check that there are subscribers
     if len(subscriber_df) == 0:
+        logging.debug("Subscriber dataframe empty, no messages sent")
         return message_logs
 
     # Construct the message body from the current
@@ -134,15 +143,17 @@ def send_notifications(topic, level, subscriber_df, client, messages, levels):
 
     # Get the current topic level as an integer for ordinal comparison
     current_topic_level = levels.index(topic)
+    logging.debug(f"Current topic level is {current_topic_level}")
     # Get the subscription topics for all subscribers as an integer also
     subscriber_df['topic_level'] = subscriber_df['topic'].apply(lambda x: levels.index(x))
     # Identify the relevant subscribers who have a notification level less than or equal to the current level
     relevant_subscribers = subscriber_df[current_topic_level >= subscriber_df['topic_level']]
+    logging.debug(f"There are {len(relevant_subscribers)} relevant subscribers")
 
     # For each subscriber send a notification
     for subscriber_phone in relevant_subscribers['phone'].values:
         # Send an SMS message
-
+        logging.debug("Creating message to send for subscriber")
         # Create the details of the current message
         current_message = {}
         current_message['topic'] = topic

@@ -5,8 +5,13 @@ import quiet
 import math
 from twilio.rest import Client
 import time
+import logging
+
 
 # Initialise a list to hold the global variables
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
 global_config = {
 
     'pollution_bucket': os.getenv("POLLUTION_QUERY_RESULTS_S3_BUCKET_NAME", None),
@@ -125,7 +130,7 @@ while True:
     # Get the current pollution level & alert category
     current_level = round(average_per_timestamp.iloc[0]['air_quality_index (aqi)']['mean'], 2)
     level_category = math.floor(current_level / 50)
-    print ('The current pollution level is {} which is at the {} level'.format(current_level, level_category))
+    logging.debug(f"The current pollution level is {current_level} which is at the {level_category} level")
 
     # Send notifications to the relevant subscribers
     messages = quiet.send_notifications(
@@ -143,8 +148,8 @@ while True:
         message_logs=messages)
 
     # Print the ids of the messages sent
-    print ('Messages succesfully sent')
-    print (message_ids)
+    logging.debug('Messages succesfully sent')
+    logging.debug(str(message_ids))
 
     # Wait an hour before running through the cycle again
     time.sleep(3600)
