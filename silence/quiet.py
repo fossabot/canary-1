@@ -2,10 +2,10 @@ import time
 import pandas as pd
 import hashlib
 from datetime import datetime
-import pytz
 import json
 import logging
-
+import math
+import logging
 
 def import_data(file_path: str, retry_time: int):
     """
@@ -45,24 +45,18 @@ def process_air_pollution_data(air_pollution_data):
     :param pd.DataFrame air_pollution_data: The dataframe containing the
     latest air pollution data
 
-    :return pd.DataFrame average_per_timestamp: The dataframe containing
+    :return float, int current_level, level_category: The air pollution level
 
     Assumptions:
     - Times are taken on the hour.
     - The average level changes hourly.
     - There is no more than one record for each city code per hour
     """
+    current_level = round(air_pollution_data.iloc[0]['average'], 2)
+    level_category = math.floor(current_level / 50)
+    logging.debug(f"The current pollution level is {current_level} which is at the {level_category} level")
 
-    # Remove missing air quality index values
-    filled_index = air_pollution_data['air_quality_index (aqi)'].dropna('rows').index
-    air_pollution_data = air_pollution_data.loc[filled_index]
-
-    # Get the average air quality for each hour
-    average_per_timestamp = air_pollution_data.groupby('time').agg({
-        'air_quality_index (aqi)': ['mean', 'count', 'max', 'min']
-    }).sort_index(ascending=False)
-
-    return average_per_timestamp
+    return current_level, level_category
 
 
 def check_eligibility(subscriber_df_with_last_message, start_hour, end_hour, get_current_time_function=datetime.now):

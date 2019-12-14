@@ -6,6 +6,7 @@ import math
 from twilio.rest import Client
 import time
 import logging
+from datetime import datetime, timedelta
 
 
 # Initialise a list to hold the global variables
@@ -68,11 +69,25 @@ global_config['twilio'] = Client(
 
 # Continuously run the code below
 while True:
+    current_time = (datetime.now()-timedelta(days=1)).strftime("%Y-%m-%d")
+
     output_bucket, output_file_path = feathers.generate_data_view(
         client=global_config['athena'],
         results_bucket=global_config['pollution_bucket'],
         database_name=global_config['database'],
-        sql_query="SELECT * from airpollution",
+        sql_query=f"""
+        SELECT * FROM (
+          SELECT 
+          time, 
+          dt, 
+          avg("air_quality_index (aqi)") as "average", 
+          count("air_quality_index (aqi)") as "count" 
+          FROM airpollution 
+          WHERE dt>='{current_time}' 
+          GROUP BY time, dt 
+          ORDER BY time DESC) 
+        LIMIT 1;
+        """,
         retry_time=60)
 
     feathers.fetch_data_view(
@@ -124,13 +139,8 @@ while True:
         start_hour=global_config['start_hour'],
         end_hour=global_config['end_hour'])
 
-    # Get the average pollution levels per hour
-    average_per_timestamp = quiet.process_air_pollution_data(air_pollution_data)
-
     # Get the current pollution level & alert category
-    current_level = round(average_per_timestamp.iloc[0]['air_quality_index (aqi)']['mean'], 2)
-    level_category = math.floor(current_level / 50)
-    logging.debug(f"The current pollution level is {current_level} which is at the {level_category} level")
+    current_level, level_category = quiet.process_air_pollution_data(air_pollution_data)
 
     # Send notifications to the relevant subscribers
     messages = quiet.send_notifications(
