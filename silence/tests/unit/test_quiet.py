@@ -63,18 +63,13 @@ class TestQuiet(unittest.TestCase):
         [
             pd.DataFrame(
                 data={
-                    "air_quality_index (aqi)": [156.0, 154.0, 128.0, 152.0, 154.0, 109.0, 153.0, 134.0, 82.0],
-                    "time": ["2019-04-17 20:00:00.000", "2019-04-17 20:00:00.000", "2019-04-17 20:00:00.000", "2019-04-17 20:00:00.000", "2019-04-17 20:00:00.000", "2019-04-17 20:00:00.000", "2019-04-17 19:00:00.000", "2019-04-17 19:00:00.000", "2019-04-17 19:00:00.000"]
+                    "average": [156.0],
+                    "time": ["2019-04-17 20:00:00.000"],
+                    "dt": ["2019-12-14-10-00-00"],
+                    "count": [4]
                 }
             ),
-            pd.DataFrame(
-                data=[[142.166667, 6, 156.0, 109.0], [123.000000, 3, 153.0, 82.0]]
-                ,
-                columns=
-                pd.MultiIndex.from_product(
-                    [['air_quality_index (aqi)'], ['mean', 'count', 'max', 'min']]),
-                index=pd.Index(["2019-04-17 20:00:00.000", "2019-04-17 19:00:00.000"], name="time")
-            )
+            (156.0, 3)
         ]
     ])
     def test_process_air_pollution_data(self, air_pollution_data, expected_outcome) -> None:
@@ -85,11 +80,19 @@ class TestQuiet(unittest.TestCase):
         :return: None
         """
 
-        average_per_timestamp = quiet.process_air_pollution_data(
+        current_level, level_category = quiet.process_air_pollution_data(
             air_pollution_data=air_pollution_data)
 
-        self.assertTrue(
-            expr=average_per_timestamp.round(decimals=2).equals(expected_outcome.round(decimals=2))
+        self.assertEqual(
+            first=expected_outcome[0],
+            second=current_level,
+            msg="The current air pollution level is not as expected"
+        )
+
+        self.assertEqual(
+            first=expected_outcome[1],
+            second=level_category,
+            msg="The current air pollution category is not as expected"
         )
 
 
