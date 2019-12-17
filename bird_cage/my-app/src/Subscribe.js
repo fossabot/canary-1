@@ -29,7 +29,7 @@ function Home(props) {
                 </Col>
             </FormGroup>
             <Col sm={6}>
-            <Button color="danger" align='left'>Subscribe</Button>
+            <Button color="danger" align='left' className='Subscribe'>Subscribe</Button>
             </Col>
         </Form>
     </Col>
@@ -48,7 +48,7 @@ function Unsubscribe(props) {
                 </Col>
             </FormGroup>
             <Col sm={6}>
-            <Button color="secondary" align='right'>Unsubscribe</Button>
+            <Button color="secondary" align='right' className='Unsubscribe'>Unsubscribe</Button>
             </Col>
         </Form>
     </Col>
@@ -68,7 +68,7 @@ function ComfirmUnsubscribe(props) {
                 </Col>
             </FormGroup>
             <Col sm={6}>
-            <Button color="secondary" align='right'>Confirm Unsubscription</Button>
+            <Button color="secondary" align='right' className='ConfirmUnsubscribe'>Confirm Unsubscription</Button>
             </Col>
         </Form>
     </Col>
@@ -88,7 +88,7 @@ function ConfirmSubscription(props) {
                 </Col>
             </FormGroup>
             <Col sm={6}>
-            <Button color="danger" align='right'>Confirm Subscription</Button>
+            <Button color="danger" align='right' className='ConfirmSubscribe'>Confirm Subscription</Button>
             </Col>
         </Form>
     </Col>
