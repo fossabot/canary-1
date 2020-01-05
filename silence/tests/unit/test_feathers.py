@@ -117,6 +117,7 @@ class TestFeathers(unittest.TestCase):
     def setUpClass(cls):
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
+        logging.getLogger('botocore').setLevel(logging.CRITICAL)
         logging.getLogger('boto3').setLevel(logging.CRITICAL)
 
     @parameterized.expand([
