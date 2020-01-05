@@ -145,6 +145,10 @@ class TestFeathers(unittest.TestCase):
     ])
     def test_delete_files_success(self, test_name, file_paths, file_paths_to_seed, expected_outcome):
 
+        file_paths = [os.path.join(os.path.dirname(os.path.abspath(__file__)), file_path) for file_path in file_paths]
+        file_paths_to_seed = [os.path.join(os.path.dirname(os.path.abspath(__file__)), file_path) for file_path in file_paths_to_seed]
+        expected_outcome = [os.path.join(os.path.dirname(os.path.abspath(__file__)), file_path) for file_path in expected_outcome]
+
         for file_path in file_paths_to_seed:
 
             with open(file_path, "w+") as f:

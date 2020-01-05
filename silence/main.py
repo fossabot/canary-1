@@ -2,73 +2,78 @@ import os
 import utilities
 import feathers
 import quiet
-import math
 from twilio.rest import Client
 import time
 import logging
 from datetime import datetime, timedelta
+import json
 
 
-# Initialise a list to hold the global variables
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+def generate_config() -> dict:
+    # Get the config settings from environment variables
+    global_config = {
 
-global_config = {
+        # Bucket names
+        'pollution_bucket': os.getenv("POLLUTION_QUERY_RESULTS_S3_BUCKET_NAME", None),
+        'subscribers_bucket': os.getenv("SUBSCRIBERS_QUERY_RESULTS_S3_BUCKET_NAME", None),
+        'logs_bucket': os.getenv("NOTIFICATION_LOGS_S3_BUCKET_NAME", None),
 
-    'pollution_bucket': os.getenv("POLLUTION_QUERY_RESULTS_S3_BUCKET_NAME", None),
-    'subscribers_bucket': os.getenv("SUBSCRIBERS_QUERY_RESULTS_S3_BUCKET_NAME", None),
-    'logs_bucket': os.getenv("NOTIFICATION_LOGS_S3_BUCKET_NAME", None),
+        # File names for database query results
+        'pollution_output_name': os.getenv("POLLUTION_OUTPUT_NAME", None),
+        'subscribers_output_name': os.getenv("SUBSCRIBERS_OUTPUT_NAME", None),
 
-    'pollution_output_name': "./data/air-pollution-data.csv",
-    'subscribers_output_name': "./data/air-pollution-subscribers.csv",
+        # Database name
+        'database': os.getenv("POLLUTION_DATABASE_NAME", None),
 
-    'database': os.getenv("POLLUTION_DATABASE_NAME", None),
+        # Credentials for access to AWS
+        'AWS_SERVER_PUBLIC_KEY_ATHENA': os.getenv("AWS_SERVER_PUBLIC_KEY_ATHENA", None),
+        'AWS_SERVER_SECRET_KEY_ATHENA': os.getenv("AWS_SERVER_SECRET_KEY_ATHENA", None),
+        'AWS_SERVER_PUBLIC_KEY_LOGS': os.getenv("AWS_SERVER_PUBLIC_KEY_LOGS", None),
+        'AWS_SERVER_SECRET_KEY_LOGS': os.getenv("AWS_SERVER_SECRET_KEY_LOGS", None),
+        'AWS_REGION': os.getenv("AWS_REGION", None),
 
-    'AWS_SERVER_PUBLIC_KEY_ATHENA': os.getenv("AWS_SERVER_PUBLIC_KEY_ATHENA", None),
-    'AWS_SERVER_SECRET_KEY_ATHENA': os.getenv("AWS_SERVER_SECRET_KEY_ATHENA", None),
-    'AWS_SERVER_PUBLIC_KEY_LOGS': os.getenv("AWS_SERVER_PUBLIC_KEY_LOGS", None),
-    'AWS_SERVER_SECRET_KEY_LOGS': os.getenv("AWS_SERVER_SECRET_KEY_LOGS", None),
-    'AWS_REGION': 'eu-west-2',
-
-    'TWILIO_ACCOUNT_SID': os.getenv("TWILIO_ACCOUNT_ID", None),
-    'TWILIO_AUTH_TOKEN': os.getenv("TWILIO_AUTH_TOKEN", None),
-
-    'levels': ['green', 'yellow', 'amber', 'red'],
-    'start_hour': 7,
-    'end_hour': 21,
-    'messages': {
-        'green': 'There is no need to take any additional precautions.',
-        'yellow': 'Avoid strenuous outdoor activity where possible and take precautions to avoid prolonged outdoor exposure.',
-        'amber': 'Avoid all strenuous outdoor activity and limit outdoor exposure.',
-        'red': 'Avoid all outdoor activity. Consider staying home.'
+        # Credentials for Twilio
+        'TWILIO_ACCOUNT_SID': os.getenv("TWILIO_ACCOUNT_ID", None),
+        'TWILIO_AUTH_TOKEN': os.getenv("TWILIO_AUTH_TOKEN", None),
     }
-}
 
-# Create the AWS and Twilio clients
-global_config['s3_athena'] = utilities.create_aws_client(
-    client_type="s3",
-    public_key=global_config["AWS_SERVER_PUBLIC_KEY_ATHENA"],
-    secret_key=global_config["AWS_SERVER_SECRET_KEY_ATHENA"],
-    region=global_config["AWS_REGION"])
+    # Get the other config settings from a file
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'notification_config.json')) as json_file:
+        notification_config = json.load(json_file)
+        global_config.update(notification_config)
 
-global_config['athena'] = utilities.create_aws_client(
-    client_type="athena",
-    public_key=global_config["AWS_SERVER_PUBLIC_KEY_ATHENA"],
-    secret_key=global_config["AWS_SERVER_SECRET_KEY_ATHENA"],
-    region=global_config["AWS_REGION"])
+    return global_config
 
-global_config['s3_logs'] = utilities.create_aws_client(
-    client_type="s3",
-    public_key=global_config["AWS_SERVER_PUBLIC_KEY_LOGS"],
-    secret_key=global_config["AWS_SERVER_SECRET_KEY_LOGS"],
-    region=global_config["AWS_REGION"])
 
-global_config['twilio'] = Client(
-    global_config['TWILIO_ACCOUNT_SID'],
-    global_config['TWILIO_AUTH_TOKEN'])
+def create_clients(global_config: dict) -> dict:
+    # Create the AWS and Twilio clients
+    global_config['s3_athena'] = utilities.create_aws_client(
+        client_type="s3",
+        public_key=global_config["AWS_SERVER_PUBLIC_KEY_ATHENA"],
+        secret_key=global_config["AWS_SERVER_SECRET_KEY_ATHENA"],
+        region=global_config["AWS_REGION"])
 
-# Continuously run the code below
-while True:
+    global_config['athena'] = utilities.create_aws_client(
+        client_type="athena",
+        public_key=global_config["AWS_SERVER_PUBLIC_KEY_ATHENA"],
+        secret_key=global_config["AWS_SERVER_SECRET_KEY_ATHENA"],
+        region=global_config["AWS_REGION"])
+
+    global_config['s3_logs'] = utilities.create_aws_client(
+        client_type="s3",
+        public_key=global_config["AWS_SERVER_PUBLIC_KEY_LOGS"],
+        secret_key=global_config["AWS_SERVER_SECRET_KEY_LOGS"],
+        region=global_config["AWS_REGION"])
+
+    global_config['twilio'] = Client(
+        global_config['TWILIO_ACCOUNT_SID'],
+        global_config['TWILIO_AUTH_TOKEN'])
+
+    return global_config
+
+
+def send_notifications(global_config: dict, retry_time: int = 60, notification_interval: int = 3600) -> None:
+
     current_time = (datetime.now()-timedelta(days=1)).strftime("%Y-%m-%d")
 
     output_bucket, output_file_path = feathers.generate_data_view(
@@ -88,13 +93,13 @@ while True:
           ORDER BY time DESC) 
         LIMIT 1;
         """,
-        retry_time=60)
+        retry_time=retry_time)
 
     feathers.fetch_data_view(
         s3=global_config['s3_athena'],
         bucket=output_bucket,
         file_path=output_file_path,
-        output_path=global_config['pollution_output_name'])
+        output_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), global_config['pollution_output_name']))
 
     output_bucket, output_file_path = feathers.generate_data_view(
         client=global_config['athena'],
@@ -113,25 +118,30 @@ while True:
 
         GROUP BY a.phone_hash, a.phone, a.topic
         """,
-        retry_time=60)
+        retry_time=retry_time)
 
     feathers.fetch_data_view(
         s3=global_config['s3_athena'],
         bucket=output_bucket,
         file_path=output_file_path,
-        output_path=global_config['subscribers_output_name'])
+        output_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), global_config['subscribers_output_name']))
 
     # Import the latest pollution data with a 60 second retry time, this is populated by the feathers application
     air_pollution_data = quiet.import_data(
-        file_path=global_config['pollution_output_name'],
-        retry_time=60)
+        file_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), global_config['pollution_output_name']),
+        retry_time=retry_time)
 
     # Import the latest subscriber data with a 60 second rety time, also populated by the feathers application
     subscriber_data = quiet.import_data(
-        file_path=global_config['subscribers_output_name'],
-        retry_time=60)
+        file_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), global_config['subscribers_output_name']),
+        retry_time=retry_time)
 
-    utilities.delete_files([global_config['pollution_output_name'], global_config['subscribers_output_name']])
+    utilities.delete_files(
+        [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), global_config['pollution_output_name']),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), global_config['subscribers_output_name'])
+        ]
+    )
 
     # Check which users are eligible for a notification based on past activity
     subscriber_data_eligible = quiet.check_eligibility(
@@ -161,5 +171,5 @@ while True:
     logging.debug('Messages succesfully sent')
     logging.debug(str(message_ids))
 
-    # Wait an hour before running through the cycle again
-    time.sleep(3600)
+    # Wait the notification interval
+    time.sleep(notification_interval)

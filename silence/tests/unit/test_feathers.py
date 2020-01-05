@@ -2,42 +2,74 @@ import unittest
 from parameterized import parameterized
 import uuid
 import feathers
+import logging
 
 
-class MockS3Client:
+class MockAthenaClient:
+    """
+    This is a mock of the AWS Athena client
+    """
 
-    def __init__(self, failure_flag: bool, results_file: str):
+    def __init__(self, failure_flag: bool, results_file: str) -> None:
+        """
+
+        :param bool failure_flag: Whether the query should succeed or fail
+        :param str results_file: The name of the results file
+        """
         self.results_file = results_file
-        self.request_counter = 0
-        self.request_limit = 3
         self.failure = failure_flag
+
+        self.request_counter = 0  # To track the number of requests made
+        self.request_limit = 3  # Hardcoded request limit before returning success or failure
+
         self.ResultConfiguration = None
         self.QueryString = None
         self.ClientRequestToken = None
         self.QueryExecutionContext = None
         self.QueryExecutionId = None
 
-    def start_query_execution(self, QueryString, ClientRequestToken, QueryExecutionContext, ResultConfiguration):
+    def start_query_execution(self, QueryString: str, ClientRequestToken: str, QueryExecutionContext,
+                              ResultConfiguration) -> dict:
+        """
+        Mocks starting the execution of a query
+
+        :param str QueryString: The query string to execute
+        :param str ClientRequestToken:
+        :param QueryExecutionContext:
+        :param ResultConfiguration:
+
+        :return: dict response: The response from Athena in AWS
+        """
 
         self.ResultConfiguration = ResultConfiguration
         self.QueryString = QueryString
         self.ClientRequestToken = ClientRequestToken
         self.QueryExecutionContext = QueryExecutionContext
+
+        # The QueryExecutionId is a randomly generated unique id
         self.QueryExecutionId = uuid.uuid4()
 
+        # The response object is a dictionary with the QueryExecutionId
         response = {
             "QueryExecutionId": self.QueryExecutionId
         }
 
         return response
 
-    def get_query_execution(self, QueryExecutionId):
+    def get_query_execution(self, QueryExecutionId: str) -> dict:
+        """
+        Mocks checking on the status of a query being executed
+
+        :param str QueryExecutionId: The unique QueryExecutionId for this query
+        :return: dict response: The response from Athena in AWS
+        """
 
         if QueryExecutionId != self.QueryExecutionId:
             raise ValueError("Execution IDs do not match!")
 
         self.request_counter += 1
 
+        # Handles polling of the query to see if it has completed
         if self.request_counter >= self.request_limit and not self.failure:
             state = 'SUCCEEDED'
         elif self.failure:
@@ -45,6 +77,7 @@ class MockS3Client:
         else:
             state = 'RUNNING'
 
+        # The response from Athena in AWS
         response = {
             'QueryExecution': {
                 'QueryExecutionId': self.QueryExecutionId,
@@ -80,10 +113,16 @@ class MockS3Client:
 
 class TestFeathers(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        logging.getLogger('boto3').setLevel(logging.CRITICAL)
+
     @parameterized.expand([
         [
             "Successful generation of the data view",
-            MockS3Client(failure_flag=False, results_file="1241241_result.csv"),
+            MockAthenaClient(failure_flag=False, results_file="1241241_result.csv"),
             "airpollutionqueryresults",
             "AIRPOLLUTION",
             "select * from airpollution",
@@ -118,7 +157,7 @@ class TestFeathers(unittest.TestCase):
     @parameterized.expand([
         [
             "Failed generation of the data view",
-            MockS3Client(failure_flag=True, results_file="1241241_result.csv"),
+            MockAthenaClient(failure_flag=True, results_file="1241241_result.csv"),
             "airpollutionqueryresults",
             "AIRPOLLUTION",
             "select * from airpollution",

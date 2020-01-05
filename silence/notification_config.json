@@ -1,0 +1,11 @@
+{
+  "levels": ["green", "yellow", "amber", "red"],
+    "start_hour": 7,
+    "end_hour": 21,
+    "messages": {
+        "green": "There is no need to take any additional precautions.",
+        "yellow": "Avoid strenuous outdoor activity where possible and take precautions to avoid prolonged outdoor exposure.",
+        "amber": "Avoid all strenuous outdoor activity and limit outdoor exposure.",
+        "red": "Avoid all outdoor activity. Consider staying home."
+    }
+}
