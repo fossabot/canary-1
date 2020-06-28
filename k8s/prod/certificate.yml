@@ -11,10 +11,3 @@ spec:
   dnsNames:
     - chirpingcanary.co.uk
     - www.chirpingcanary.co.uk
-  acme:
-    config:
-      - http01:
-          ingressClass: nginx
-        domains:
-          - chirpingcanary.co.uk
-          - www.chirpingcanary.co.uk
